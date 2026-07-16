@@ -6,6 +6,7 @@
 
   [![License: MIT](https://img.shields.io/badge/License-MIT-63f2ab.svg)](LICENSE)
   [![Latest release](https://img.shields.io/github/v/release/Real-Fruit-Snacks/terminal-workbench-cursor?color=6bdcff&label=release)](https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases)
+  [![Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FobsidianmD%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json&query=%24%5B%22terminal-workbench-cursor%22%5D.downloads&label=downloads&color=b78cff)](https://obsidian.md/plugins?id=terminal-workbench-cursor)
   [![Obsidian](https://img.shields.io/badge/Obsidian-1.5.0%2B-f0c674.svg)](https://obsidian.md)
 
   [Documentation](https://real-fruit-snacks.github.io/terminal-workbench-cursor/) · [Changelog](CHANGELOG.md) · [Report an issue](https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/issues)
@@ -56,9 +57,8 @@ hold one accent, cycle the palette, or match your cursor.
 
 ## Install
 
-**Community plugins** — once it's approved for the directory, search for
-**Terminal Workbench Cursor** in **Settings → Community plugins → Browse**,
-install, and enable. Until then, use one of the methods below.
+**Community plugins (recommended)** — in **Settings → Community plugins → Browse**,
+search for **Terminal Workbench Cursor**, then install and enable.
 
 **Manual** — download `main.js`, `manifest.json`, `styles.css`, and
 `versions.json` from the
