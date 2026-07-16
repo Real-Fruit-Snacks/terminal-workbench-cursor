@@ -4,6 +4,14 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-07-15
+
+### Changed
+- Repository housekeeping: `LICENSE` restored to the standard MIT text so it is
+  recognised as MIT, with the fork attribution moved to a `NOTICE` file.
+  Documentation and the landing page updated for the community listing. No
+  changes to the plugin runtime since 1.0.4.
+
 ## [1.0.4] - 2026-07-15
 
 ### Changed
