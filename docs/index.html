@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Terminal Workbench Cursor is an Obsidian cursor engine for the Terminal Workbench family. Box, line, and underline carets, a torch spotlight, and a Ghost Trail that peels a little ghost off the text as you type.">
+    <meta name="keywords" content="Terminal Workbench Cursor, Obsidian, plugin, cursor, caret, ghost trail, CodeMirror, theme">
+    <title>Terminal Workbench Cursor — a cursor engine with a ghost trail</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <meta property="og:title" content="Terminal Workbench Cursor — a cursor engine with a ghost trail">
+    <meta property="og:description" content="An Obsidian cursor engine for the Terminal Workbench family, with a Ghost Trail that rises from the text you type. Respects reduced motion; degrades cleanly without the theme.">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ==================== NAV ==================== -->
+    <nav class="nav" id="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo"><img src="favicon.svg" alt="" width="24" height="24">Terminal Workbench Cursor</a>
+            <div class="nav-links">
+                <a href="#features" class="manifest">Features</a>
+                <a href="#how" class="manifest">Ghost Trail</a>
+                <a href="#install" class="manifest">Install</a>
+                <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor" class="nav-github" target="_blank" rel="noopener" aria-label="GitHub repository">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section class="hero">
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+            <div class="hero-badge manifest"><span class="dot"></span>Free &amp; open source · MIT</div>
+            <h1 class="hero-title">A cursor engine, with a <em>ghost trail</em>.</h1>
+            <p class="hero-subtitle">Terminal Workbench Cursor forges your caret — box, line, or underline, smooth gliding, a torch spotlight — and lets a little ghost peel off the text as you type. Colours come from the Terminal Workbench palette; motion respects your accessibility settings.</p>
+            <div class="hero-actions">
+                <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases/latest" class="btn btn--primary" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Download
+                </a>
+                <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor" class="btn btn--ghost" target="_blank" rel="noopener">
+                    View on GitHub
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="mock">
+                <div class="mock-bar">
+                    <span class="mock-prompt">&#10095;</span>
+                    <span class="manifest">editor · ghost trail</span>
+                </div>
+                <div class="mock-editor">
+                    <div class="mock-line"><span class="mock-gutter">1</span><span class="mock-w" style="width:52px"></span><span class="mock-w" style="width:120px"></span><span class="mock-w" style="width:38px"></span></div>
+                    <div class="mock-line"><span class="mock-gutter">2</span><span class="mock-w" style="width:88px"></span><span class="mock-w" style="width:64px"></span></div>
+                    <div class="mock-line"><span class="mock-gutter">3</span><span class="mock-w" style="width:40px"></span><span class="mock-w" style="width:150px"></span><span class="mock-w" style="width:30px"></span></div>
+                    <div class="mock-line mock-line--active"><span class="mock-gutter">4</span><span class="mock-w" style="width:56px"></span><span class="mock-w" style="width:104px"></span><span class="mock-caret"></span></div>
+                    <div class="ghost-field">
+                        <span class="ghost g1" style="left:206px; top:120px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
+                        <span class="ghost g2" style="left:220px; top:122px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
+                        <span class="ghost g3" style="left:198px; top:118px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
+                        <span class="ghost g4" style="left:224px; top:119px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
+                        <span class="ghost g5" style="left:192px; top:121px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
+                    </div>
+                </div>
+                <div class="mock-foot"><span class="manifest">Ghost Trail: <b>on</b> · rises from typed text · respects reduced-motion</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FEATURES ==================== -->
+    <section class="features" id="features">
+        <div class="wrap">
+            <div class="section-head">
+                <p class="kicker manifest">Capabilities</p>
+                <h2 class="section-title">Everything the caret can be.</h2>
+                <p class="section-desc">One canvas engine draws every effect, so styles and effects stack without fighting each other — and every bit of motion can be switched off.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></div>
+                    <h3>Ghost Trail</h3>
+                    <p>A miniature <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-pet" target="_blank" rel="noopener">Terminal Workbench Pet</a> ghost peels off each character you type — and, if you like, off the caret as it moves. It rises, drifts, and fades.</p>
+                </div>
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="4" x2="16" y2="4"/><line x1="8" y1="20" x2="16" y2="20"/></svg></div>
+                    <h3>Box, line &amp; underline</h3>
+                    <p>Pick a caret shape, then tune width, opacity, glow, and blink. Optional smooth gliding eases the caret between positions with typing-aware acceleration.</p>
+                </div>
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg></div>
+                    <h3>Torch spotlight</h3>
+                    <p>Dim the workspace and carry a soft pool of light around the caret or pointer, with adjustable radius, colour, and intensity. Runs alongside any cursor style.</p>
+                </div>
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h4"/></svg></div>
+                    <h3>A drawer of effects</h3>
+                    <p>Popping letters, a fading pixel trail, motion smear, a CRT trail, and an energy beam — mix and match, each with its own controls.</p>
+                </div>
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="12" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="13" r="2.5"/><path d="M12 22a10 10 0 1 1 0-20"/></svg></div>
+                    <h3>Terminal Workbench palette</h3>
+                    <p>Cursor and ghost colours resolve from the <code>--twb-*</code> accent ramp, so a fresh install looks native under the theme — and falls back to clean defaults without it.</p>
+                </div>
+                <div class="feature-card" data-reveal>
+                    <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+                    <h3>Calm by default</h3>
+                    <p>Ghost Trail ships off, and every animation — ghosts, smear, energy beam — honours <code>prefers-reduced-motion</code>, so the caret stays still when you need it to.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section class="how" id="how">
+        <div class="wrap">
+            <div class="section-head">
+                <p class="kicker manifest">The Ghost Trail</p>
+                <h2 class="section-title">Turn it on, tune it, let it drift.</h2>
+            </div>
+            <div class="steps">
+                <div class="step" data-reveal>
+                    <div class="step-marker"><span class="step-num">1</span><div class="step-line"></div></div>
+                    <div class="step-body">
+                        <h3>Enable it in settings</h3>
+                        <p>Open <strong>Settings → Terminal Workbench Cursor → Effects → Ghost Trail</strong> and switch it on. The controls unfold beneath the toggle.</p>
+                    </div>
+                </div>
+                <div class="step" data-reveal>
+                    <div class="step-marker"><span class="step-num">2</span><div class="step-line"></div></div>
+                    <div class="step-body">
+                        <h3>Choose the triggers</h3>
+                        <p>Spawn ghosts as you type, as the caret moves, or both. Density, size, rise speed, drift, lifetime, and opacity are all yours to set.</p>
+                    </div>
+                </div>
+                <div class="step" data-reveal>
+                    <div class="step-marker"><span class="step-num">3</span></div>
+                    <div class="step-body">
+                        <h3>Pick a colour mode</h3>
+                        <p>Hold a single accent, cycle the whole palette like a booped pet, or match your cursor colour. With reduced motion on, no ghosts spawn at all.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== INSTALL ==================== -->
+    <section class="install" id="install">
+        <div class="wrap">
+            <div class="section-head">
+                <p class="kicker manifest">Get started</p>
+                <h2 class="section-title">Install in under a minute.</h2>
+            </div>
+            <div class="install-grid">
+                <div class="install-card install-card--rec" data-reveal>
+                    <span class="install-card-tag">Recommended</span>
+                    <h3>Manual</h3>
+                    <ol>
+                        <li>Download <code>main.js</code>, <code>ghost-core.js</code>, <code>manifest.json</code>, <code>styles.css</code>, and <code>versions.json</code> from the <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases/latest" target="_blank" rel="noopener">latest release</a>.</li>
+                        <li>Place them in <code>.obsidian/plugins/terminal-workbench-cursor/</code>.</li>
+                        <li>Enable <strong>Terminal Workbench Cursor</strong> in Community plugins.</li>
+                    </ol>
+                </div>
+                <div class="install-card" data-reveal>
+                    <h3>BRAT</h3>
+                    <ol>
+                        <li>Install the <a href="https://github.com/TfTHacker/obsidian42-brat" target="_blank" rel="noopener">BRAT</a> plugin.</li>
+                        <li>Choose <strong>Add beta plugin</strong>.</li>
+                        <li>Enter <code>Real-Fruit-Snacks/terminal-workbench-cursor</code>.</li>
+                        <li>Enable <strong>Terminal Workbench Cursor</strong>.</li>
+                    </ol>
+                </div>
+                <div class="install-card" data-reveal>
+                    <h3>Community plugins</h3>
+                    <ol>
+                        <li>Open <strong>Settings → Community plugins → Browse</strong>.</li>
+                        <li>Search for <strong>Terminal Workbench Cursor</strong>.</li>
+                        <li>Click <strong>Install</strong>, then <strong>Enable</strong> <em>(pending directory review)</em>.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+        <div class="wrap footer-inner">
+            <div class="footer-left"><img src="favicon.svg" alt="" width="22" height="22"><span>Terminal Workbench Cursor</span></div>
+            <p class="footer-meta">MIT &middot; forged from <a href="https://github.com/Sadsnake1/cursor-smith" target="_blank" rel="noopener">cursor-smith</a> &middot; built for <a href="https://obsidian.md" target="_blank" rel="noopener">Obsidian</a> &middot; by <a href="https://github.com/Real-Fruit-Snacks" target="_blank" rel="noopener">Real-Fruit-Snacks</a></p>
+        </div>
+    </footer>
+
+    <script>
+        const nav = document.getElementById('nav');
+        const onScroll = () => nav.classList.toggle('nav--scrolled', window.scrollY > 32);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+
+        const revealEls = document.querySelectorAll('[data-reveal]');
+        if ('IntersectionObserver' in window) {
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); obs.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            revealEls.forEach(el => obs.observe(el));
+        } else {
+            revealEls.forEach(el => el.classList.add('revealed'));
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function (e) {
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Editors
+.vscode
+.idea
+*.iml
+
+# Obsidian dev-vault settings
+data.json
+
+# Node
+node_modules
+
+# macOS
+.DS_Store

@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify tag matches manifest.json version
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          manifest_version=$(jq -r .version manifest.json)
+          if [ "$tag" != "$manifest_version" ]; then
+            echo "Tag ($tag) does not match manifest.json version ($manifest_version)" >&2
+            exit 1
+          fi
+
+      - name: Verify plugin syntax
+        run: |
+          node --check main.js
+          node --check ghost-core.js
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          awk -v tag="$tag" '
+            $0 ~ "^## \\[" tag "\\]" { flag = 1; next }
+            /^## \[/ && flag { exit }
+            flag { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "See CHANGELOG.md" > release-notes.md
+          fi
+
+      - name: Build plugin zip
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          mkdir -p terminal-workbench-cursor
+          cp manifest.json main.js ghost-core.js styles.css versions.json terminal-workbench-cursor/
+          zip -r "terminal-workbench-cursor-${tag}.zip" terminal-workbench-cursor
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          gh release create "$tag" \
+            --title="$tag" \
+            --notes-file=release-notes.md \
+            main.js manifest.json ghost-core.js styles.css versions.json "terminal-workbench-cursor-${tag}.zip"

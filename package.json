@@ -1,0 +1,9 @@
+{
+  "name": "terminal-workbench-cursor",
+  "version": "1.0.0",
+  "description": "Terminal Workbench Cursor — Obsidian plugin (dev harness).",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}
