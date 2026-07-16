@@ -45,7 +45,7 @@ jobs:
         run: |
           tag="${GITHUB_REF#refs/tags/}"
           mkdir -p terminal-workbench-cursor
-          cp manifest.json main.js ghost-core.js styles.css versions.json terminal-workbench-cursor/
+          cp manifest.json main.js styles.css versions.json terminal-workbench-cursor/
           zip -r "terminal-workbench-cursor-${tag}.zip" terminal-workbench-cursor
 
       - name: Create release
@@ -56,4 +56,4 @@ jobs:
           gh release create "$tag" \
             --title="$tag" \
             --notes-file=release-notes.md \
-            main.js manifest.json ghost-core.js styles.css versions.json "terminal-workbench-cursor-${tag}.zip"
+            main.js manifest.json styles.css versions.json "terminal-workbench-cursor-${tag}.zip"

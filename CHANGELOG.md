@@ -4,6 +4,21 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-07-15
+
+### Fixed
+- The Ghost Trail now works on Obsidian/Electron builds that do not resolve a
+  relative `require()` from a plugin's `main.js`, which previously left the
+  effect silently disabled. The ghost helpers are inlined into `main.js`, so the
+  plugin is a single self-contained file with no second runtime file to load.
+- The ghost sprite is given an explicit `width`/`height` so it always rasterizes
+  onto the canvas.
+
+### Changed
+- Manual installs now need only `main.js`, `manifest.json`, `styles.css`, and
+  `versions.json` — `ghost-core.js` is no longer required at runtime.
+- The default ghost size is larger (24), and the **Size** slider now ranges up to 64.
+
 ## [1.0.0] - 2026-07-15
 
 Initial release. Terminal Workbench Cursor is a cursor engine for the Terminal

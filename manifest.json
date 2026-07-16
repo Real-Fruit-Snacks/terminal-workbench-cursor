@@ -1,7 +1,7 @@
 {
   "id": "terminal-workbench-cursor",
   "name": "Terminal Workbench Cursor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.5.0",
   "description": "A cursor engine for the Terminal Workbench family: gliding carets, torch spotlight, and a Ghost Trail that peels the Terminal Workbench Pet ghost off your text as you type.",
   "author": "Real-Fruit-Snacks",

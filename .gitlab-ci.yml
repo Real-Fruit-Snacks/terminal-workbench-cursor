@@ -8,7 +8,6 @@ bundle:
   script:
     - mkdir -p dist
     - cp main.js dist/
-    - cp ghost-core.js dist/
     - cp manifest.json dist/
     - cp styles.css dist/
     - cp versions.json dist/

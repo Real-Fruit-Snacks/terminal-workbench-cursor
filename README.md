@@ -57,14 +57,11 @@ enabled at the OS level, no ghosts spawn.
 
 ## Install
 
-**Manual (recommended)** — download `main.js`, `ghost-core.js`, `manifest.json`,
-`styles.css`, and `versions.json` from the
+**Manual (recommended)** — download `main.js`, `manifest.json`, `styles.css`, and
+`versions.json` from the
 [latest release](https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases/latest),
 place them in `<vault>/.obsidian/plugins/terminal-workbench-cursor/`, and enable
 **Terminal Workbench Cursor** in Community plugins.
-
-> This plugin ships **unbundled**: `ghost-core.js` sits beside `main.js`, so be
-> sure to copy it too.
 
 **BRAT** — add the beta plugin `Real-Fruit-Snacks/terminal-workbench-cursor` in
 [BRAT](https://github.com/TfTHacker/obsidian42-brat), then enable it.
@@ -76,9 +73,10 @@ place them in `<vault>/.obsidian/plugins/terminal-workbench-cursor/`, and enable
 
 ## Development
 
-The plugin is plain, unbundled JavaScript with no build step. The pure helpers in
-`ghost-core.js` (ghost SVG, palette resolution, physics, throttle) are unit-tested
-with Node's built-in runner:
+The plugin is plain JavaScript with no build step — a single self-contained
+`main.js`. The pure Ghost Trail helpers (ghost SVG, palette resolution, physics,
+throttle) are mirrored in `ghost-core.js`, which is the unit-tested reference for
+that logic:
 
 ```bash
 npm test

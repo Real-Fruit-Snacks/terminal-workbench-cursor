@@ -1,6 +1,8 @@
 // ghost-core.js — pure, dependency-free helpers for the Ghost Trail effect.
 // No DOM and no Obsidian imports, so this module is unit-tested directly with
-// node:test. main.js require()s it at runtime.
+// node:test. This is the tested REFERENCE for the ghost logic; main.js inlines
+// the same functions (a single self-contained plugin file loads reliably in
+// every Obsidian/Electron build). Keep the two copies in sync.
 
 // The Terminal Workbench Pet ghost, parameterized by body + eye fill.
 // Path is the pet's body outline (rounded top, scalloped skirt); eyes are two rects.
