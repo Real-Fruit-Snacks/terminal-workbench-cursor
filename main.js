@@ -119,7 +119,7 @@ const DEFAULT_SETTINGS = {
   ghostDrift: 6,
   ghostLifetimeMs: 750,
   ghostOpacity: 0.9,
-  ghostColorMode: "accent", // "accent" | "cycle" | "match"
+  ghostColorMode: "cycle", // "cycle" | "accent" | "match"
 
   // --- smooth cursor global category ---
   smoothEnabled: false,
@@ -1488,7 +1488,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.trail = this.trail.filter((p) => now - p.t < fade);
     for (const p of this.trail) {
       const age = (now - p.t) / fade;
-      const alpha = Math.max(0, 1 - age) * 0.55;
+      const alpha = Math.max(0, 1 - age) * 0.72;
       if (alpha > 0.02) cb(p, alpha);
     }
   }
@@ -1839,6 +1839,8 @@ class CursorSmithSettingTab extends PluginSettingTab {
     containerEl.empty();
     containerEl.addClass("twc-settings");
 
+    const s = this.plugin.settings;
+
     const set = (key) => async (v) => {
       this.plugin.settings[key] = v;
       await this.plugin.saveSettings();
@@ -1850,29 +1852,37 @@ class CursorSmithSettingTab extends PluginSettingTab {
       this.display();
     };
 
+    const section = (title, desc) => {
+      containerEl.createEl("h3", { text: title });
+      if (desc) containerEl.createEl("p", { text: desc, cls: "twc-section-desc" });
+    };
+    const sub = (title) => containerEl.createEl("h4", { text: title });
+
     containerEl.createEl("h2", { text: "▐ Terminal Workbench Cursor" });
-    containerEl.createEl("h3", { text: "Core Configuration" });
+
+    // ── General ─────────────────────────────────────────────
+    section("General", "Turn the engine on and choose your caret shape.");
 
     new Setting(containerEl)
-      .setName("Enable Plugin")
+      .setName("Enable plugin")
+      .setDesc("Master switch for the custom cursor engine.")
       .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.enabled)
-          .onChange(async (value) => {
-            this.plugin.settings.enabled = value;
-            value ? this.plugin.enable() : this.plugin.disable();
-            await this.plugin.saveSettings();
-          })
+        toggle.setValue(s.enabled).onChange(async (value) => {
+          this.plugin.settings.enabled = value;
+          value ? this.plugin.enable() : this.plugin.disable();
+          await this.plugin.saveSettings();
+        })
       );
 
     new Setting(containerEl)
-      .setName("Cursor Style")
+      .setName("Cursor style")
+      .setDesc("The caret shape: a solid Box, a vertical Line, or an Underline.")
       .addDropdown((dropdown) =>
         dropdown
           .addOption("Box", "Box")
           .addOption("Line", "Line")
           .addOption("Underline", "Underline")
-          .setValue(this.plugin.settings.cursorStyle)
+          .setValue(s.cursorStyle)
           .onChange(async (value) => {
             this.plugin.settings.cursorStyle = value;
             await this.plugin.saveSettings();
@@ -1882,222 +1892,252 @@ class CursorSmithSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Hide Real Cursor")
-      .setDesc("Hides your browser's normal text cursor so only the custom one shows.")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.hideNativeCaret).onChange(set("hideNativeCaret")));
+      .setName("Hide real cursor")
+      .setDesc("Hides the browser's normal text caret so only the custom one shows.")
+      .addToggle((toggle) => toggle.setValue(s.hideNativeCaret).onChange(set("hideNativeCaret")));
 
-    containerEl.createEl("h3", { text: "Appearance" });
+    // ── Appearance ──────────────────────────────────────────
+    section("Appearance", "Colour, size, and opacity of the caret itself.");
 
-    if (this.plugin.settings.cursorStyle === "Line") {
+    if (s.cursorStyle === "Line") {
       new Setting(containerEl)
-        .setName("Cursor Thickness")
-        .setDesc("How thick the Line cursor is, in pixels.")
-        .addSlider((slider) =>
-          slider
-            .setLimits(1, 12, 1)
-            .setValue(this.plugin.settings.caretWidthPx)
-            .setDynamicTooltip()
-            .onChange(set("caretWidthPx"))
+        .setName("Cursor thickness")
+        .setDesc("How thick the Line caret is, in pixels.")
+        .addSlider((sl) =>
+          sl.setLimits(1, 12, 1).setValue(s.caretWidthPx).setDynamicTooltip().onChange(set("caretWidthPx"))
         );
     }
 
     new Setting(containerEl)
-      .setName("Cursor Color (Dark Theme)")
+      .setName("Cursor colour (dark theme)")
+      .setDesc("Caret colour in dark mode. Defaults to the Terminal Workbench accent.")
       .addColorPicker((cp) =>
-        cp
-          .setValue(this.plugin.settings.colorDark === "theme" ? this.plugin.themeAccentHex() : this.plugin.settings.colorDark)
-          .onChange(set("colorDark"))
+        cp.setValue(s.colorDark === "theme" ? this.plugin.themeAccentHex() : s.colorDark).onChange(set("colorDark"))
       );
 
     new Setting(containerEl)
-      .setName("Cursor Color (Light Theme)")
+      .setName("Cursor colour (light theme)")
+      .setDesc("Caret colour in light mode. Defaults to the Terminal Workbench accent.")
       .addColorPicker((cp) =>
-        cp
-          .setValue(this.plugin.settings.colorLight === "theme" ? this.plugin.themeAccentHex() : this.plugin.settings.colorLight)
-          .onChange(set("colorLight"))
+        cp.setValue(s.colorLight === "theme" ? this.plugin.themeAccentHex() : s.colorLight).onChange(set("colorLight"))
       );
 
     new Setting(containerEl)
-      .setName("Cursor Opacity")
-      .setDesc("How see-through the cursor is.")
-      .addSlider((s) => s.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.cursorOpacity).setDynamicTooltip().onChange(set("cursorOpacity")));
+      .setName("Cursor opacity")
+      .setDesc("How see-through the caret is.")
+      .addSlider((sl) => sl.setLimits(0.1, 1, 0.05).setValue(s.cursorOpacity).setDynamicTooltip().onChange(set("cursorOpacity")));
 
-    if (this.plugin.settings.cursorStyle === "Box") {
+    if (s.cursorStyle === "Box") {
       new Setting(containerEl)
-        .setName("Show Letter Inside Cursor")
-        .setDesc("Shows the letter under the cursor inside the block, with the colors flipped.")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.showChar).onChange(set("showChar")));
+        .setName("Show letter inside cursor")
+        .setDesc("Draws the character under the caret inside the block, with the colours flipped.")
+        .addToggle((toggle) => toggle.setValue(s.showChar).onChange(set("showChar")));
     }
 
-    containerEl.createEl("h3", { text: "Blinking" });
+    // ── Blinking ────────────────────────────────────────────
+    section("Blinking", "Whether and how the caret blinks.");
 
     new Setting(containerEl)
       .setName("Blinking")
-      .setDesc("Makes the cursor blink. Turn off to keep it always fully lit.")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.blinkingEnabled).onChange(setAndRedraw("blinkingEnabled")));
+      .setDesc("Makes the caret blink. Turn off to keep it always fully lit.")
+      .addToggle((toggle) => toggle.setValue(s.blinkingEnabled).onChange(setAndRedraw("blinkingEnabled")));
 
-    if (this.plugin.settings.blinkingEnabled) {
+    if (s.blinkingEnabled) {
       new Setting(containerEl)
-        .setName("Blink Speed")
-        .setDesc("How fast the cursor blinks.")
-        .addSlider((s) => s.setLimits(0.1, 3, 0.1).setValue(this.plugin.settings.blinkSpeed).setDynamicTooltip().onChange(set("blinkSpeed")));
+        .setName("Blink speed")
+        .setDesc("How fast the caret blinks.")
+        .addSlider((sl) => sl.setLimits(0.1, 3, 0.1).setValue(s.blinkSpeed).setDynamicTooltip().onChange(set("blinkSpeed")));
 
       new Setting(containerEl)
-        .setName("Blink Balance")
+        .setName("Blink balance")
         .setDesc("How the blink cycle is split between lit and dark.")
-        .addSlider((s) => s.setLimits(0.1, 0.9, 0.05).setValue(this.plugin.settings.blinkOnOffBalance).setDynamicTooltip().onChange(set("blinkOnOffBalance")));
+        .addSlider((sl) => sl.setLimits(0.1, 0.9, 0.05).setValue(s.blinkOnOffBalance).setDynamicTooltip().onChange(set("blinkOnOffBalance")));
 
       new Setting(containerEl)
-        .setName("Don't Blink While Typing")
-        .setDesc("Keeps the cursor fully lit while you type or move it.")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.smoothStopBlinking).onChange(set("smoothStopBlinking")));
+        .setName("Don't blink while typing")
+        .setDesc("Keeps the caret fully lit while you type or move it.")
+        .addToggle((toggle) => toggle.setValue(s.smoothStopBlinking).onChange(set("smoothStopBlinking")));
     }
 
-    containerEl.createEl("h3", { text: "Smooth Movement" });
+    // ── Smooth movement ─────────────────────────────────────
+    section("Smooth movement", "Let the caret glide to its next position instead of jumping.");
 
     new Setting(containerEl)
-      .setName("Smooth Movement")
-      .setDesc("Makes the cursor glide to its new spot instead of jumping there instantly.")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.smoothEnabled).onChange(setAndRedraw("smoothEnabled")));
+      .setName("Smooth movement")
+      .setDesc("Makes the caret glide to its new spot instead of appearing there instantly.")
+      .addToggle((toggle) => toggle.setValue(s.smoothEnabled).onChange(setAndRedraw("smoothEnabled")));
 
-    if (this.plugin.settings.smoothEnabled) {
+    if (s.smoothEnabled) {
       new Setting(containerEl)
-        .setName("Glide Amount")
-        .addSlider((s) => s.setLimits(0.05, 0.30, 0.05).setValue(this.plugin.settings.smoothness).setDynamicTooltip().onChange(set("smoothness")));
-
-      new Setting(containerEl)
-        .setName("Catch-Up Speed")
-        .addSlider((s) => s.setLimits(0.30, 0.80, 0.05).setValue(this.plugin.settings.catchUpSpeed).setDynamicTooltip().onChange(set("catchUpSpeed")));
+        .setName("Glide amount")
+        .setDesc("How much easing is applied. Higher feels looser.")
+        .addSlider((sl) => sl.setLimits(0.05, 0.3, 0.05).setValue(s.smoothness).setDynamicTooltip().onChange(set("smoothness")));
 
       new Setting(containerEl)
-        .setName("Max Catch-Up Speed")
-        .addSlider((s) => s.setLimits(0.50, 1.0, 0.05).setValue(this.plugin.settings.maxCatchUpSpeed).setDynamicTooltip().onChange(set("maxCatchUpSpeed")));
+        .setName("Catch-up speed")
+        .setDesc("How quickly the caret closes the gap to its target.")
+        .addSlider((sl) => sl.setLimits(0.3, 0.8, 0.05).setValue(s.catchUpSpeed).setDynamicTooltip().onChange(set("catchUpSpeed")));
 
       new Setting(containerEl)
-        .setName("Speed Up When Typing Fast")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.smoothAdaptive).onChange(set("smoothAdaptive")));
+        .setName("Max catch-up speed")
+        .setDesc("Upper limit on the catch-up speed for long jumps.")
+        .addSlider((sl) => sl.setLimits(0.5, 1.0, 0.05).setValue(s.maxCatchUpSpeed).setDynamicTooltip().onChange(set("maxCatchUpSpeed")));
 
       new Setting(containerEl)
-        .setName("Movement Delay")
-        .addSlider((s) => s.setLimits(0, 500, 10).setValue(this.plugin.settings.moveDelayMs).setDynamicTooltip().onChange(set("moveDelayMs")));
+        .setName("Speed up when typing fast")
+        .setDesc("Adapts the glide so the caret keeps up during fast typing.")
+        .addToggle((toggle) => toggle.setValue(s.smoothAdaptive).onChange(set("smoothAdaptive")));
+
+      new Setting(containerEl)
+        .setName("Movement delay")
+        .setDesc("Waits this many milliseconds before committing a caret move.")
+        .addSlider((sl) => sl.setLimits(0, 500, 10).setValue(s.moveDelayMs).setDynamicTooltip().onChange(set("moveDelayMs")));
     }
 
-    containerEl.createEl("h3", { text: "Effects" });
-
-    new Setting(containerEl)
-      .setName("Popping Letters")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.popLetters).onChange(set("popLetters")));
-
-    new Setting(containerEl)
-      .setName("Pixel Trail")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.flameTrail).onChange(set("flameTrail")));
-
-    new Setting(containerEl)
-      .setName("Motion Smear")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.smear).onChange(setAndRedraw("smear")));
-
-    if (this.plugin.settings.smear) {
-      new Setting(containerEl)
-        .setName("Stiffness")
-        .addSlider((s) => s.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.smearStiffness).setDynamicTooltip().onChange(set("smearStiffness")));
-
-      new Setting(containerEl)
-        .setName("Trailing Stiffness")
-        .addSlider((s) => s.setLimits(0.05, 1, 0.05).setValue(this.plugin.settings.smearTrailingStiffness).setDynamicTooltip().onChange(set("smearTrailingStiffness")));
-
-      new Setting(containerEl)
-        .setName("Damping")
-        .addSlider((s) => s.setLimits(0.05, 1, 0.05).setValue(this.plugin.settings.smearDamping).setDynamicTooltip().onChange(set("smearDamping")));
-    }
+    // ── Ghost Trail ─────────────────────────────────────────
+    section("Ghost Trail", "A little Terminal Workbench Pet ghost peels off your text as you type.");
 
     new Setting(containerEl)
       .setName("Ghost Trail")
-      .setDesc("Peels the Terminal Workbench Pet ghost off your text. Respects reduced-motion.")
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.ghostTrail).onChange(setAndRedraw("ghostTrail"))
-      );
+      .setDesc("Spawn ghosts that rise, drift, and fade. Off by default.")
+      .addToggle((toggle) => toggle.setValue(s.ghostTrail).onChange(setAndRedraw("ghostTrail")));
 
-    if (this.plugin.settings.ghostTrail) {
+    if (s.ghostTrail) {
       new Setting(containerEl)
         .setName("Ghosts on typing")
-        .addToggle((t) => t.setValue(this.plugin.settings.ghostOnType).onChange(set("ghostOnType")));
+        .setDesc("Spawn a ghost from each character you type.")
+        .addToggle((t) => t.setValue(s.ghostOnType).onChange(set("ghostOnType")));
 
       new Setting(containerEl)
         .setName("Ghosts on cursor move")
-        .addToggle((t) => t.setValue(this.plugin.settings.ghostOnMove).onChange(set("ghostOnMove")));
+        .setDesc("Also spawn a ghost when the caret moves without typing (arrows, clicks).")
+        .addToggle((t) => t.setValue(s.ghostOnMove).onChange(set("ghostOnMove")));
 
       new Setting(containerEl)
-        .setName("Color mode")
+        .setName("Colour mode")
+        .setDesc("Multicolour cycles the whole palette; Single accent holds one colour; Match uses your cursor colour.")
         .addDropdown((d) =>
           d
-            .addOption("accent", "Accent")
-            .addOption("cycle", "Cycle palette")
+            .addOption("cycle", "Cycle palette (multicolour)")
+            .addOption("accent", "Single accent")
             .addOption("match", "Match cursor")
-            .setValue(this.plugin.settings.ghostColorMode)
+            .setValue(s.ghostColorMode)
             .onChange(set("ghostColorMode"))
         );
 
       new Setting(containerEl)
         .setName("Size")
-        .addSlider((s) => s.setLimits(8, 64, 1).setValue(this.plugin.settings.ghostSize).setDynamicTooltip().onChange(set("ghostSize")));
+        .setDesc("Ghost size, in pixels.")
+        .addSlider((sl) => sl.setLimits(8, 64, 1).setValue(s.ghostSize).setDynamicTooltip().onChange(set("ghostSize")));
 
       new Setting(containerEl)
         .setName("Rise speed")
-        .addSlider((s) => s.setLimits(20, 200, 5).setValue(this.plugin.settings.ghostRiseSpeed).setDynamicTooltip().onChange(set("ghostRiseSpeed")));
+        .setDesc("How fast ghosts float upward.")
+        .addSlider((sl) => sl.setLimits(20, 200, 5).setValue(s.ghostRiseSpeed).setDynamicTooltip().onChange(set("ghostRiseSpeed")));
 
       new Setting(containerEl)
         .setName("Drift")
-        .addSlider((s) => s.setLimits(0, 20, 1).setValue(this.plugin.settings.ghostDrift).setDynamicTooltip().onChange(set("ghostDrift")));
+        .setDesc("How much ghosts wander sideways as they rise.")
+        .addSlider((sl) => sl.setLimits(0, 20, 1).setValue(s.ghostDrift).setDynamicTooltip().onChange(set("ghostDrift")));
 
       new Setting(containerEl)
-        .setName("Lifetime (ms)")
-        .addSlider((s) => s.setLimits(300, 2000, 50).setValue(this.plugin.settings.ghostLifetimeMs).setDynamicTooltip().onChange(set("ghostLifetimeMs")));
+        .setName("Lifetime")
+        .setDesc("How long each ghost lasts before fading out, in milliseconds.")
+        .addSlider((sl) => sl.setLimits(300, 2000, 50).setValue(s.ghostLifetimeMs).setDynamicTooltip().onChange(set("ghostLifetimeMs")));
 
       new Setting(containerEl)
         .setName("Opacity")
-        .addSlider((s) => s.setLimits(0.1, 1, 0.05).setValue(this.plugin.settings.ghostOpacity).setDynamicTooltip().onChange(set("ghostOpacity")));
+        .setDesc("Peak opacity of a ghost.")
+        .addSlider((sl) => sl.setLimits(0.1, 1, 0.05).setValue(s.ghostOpacity).setDynamicTooltip().onChange(set("ghostOpacity")));
 
       new Setting(containerEl)
-        .setName("Density: min spawn interval (ms)")
-        .addSlider((s) => s.setLimits(0, 200, 5).setValue(this.plugin.settings.ghostMinIntervalMs).setDynamicTooltip().onChange(setAndRedraw("ghostMinIntervalMs")));
+        .setName("Spawn spacing")
+        .setDesc("Minimum time between ghosts, in milliseconds. Higher means fewer ghosts while typing fast.")
+        .addSlider((sl) => sl.setLimits(0, 200, 5).setValue(s.ghostMinIntervalMs).setDynamicTooltip().onChange(setAndRedraw("ghostMinIntervalMs")));
 
       new Setting(containerEl)
         .setName("Max ghosts on screen")
-        .addSlider((s) => s.setLimits(4, 60, 1).setValue(this.plugin.settings.ghostMaxConcurrent).setDynamicTooltip().onChange(set("ghostMaxConcurrent")));
+        .setDesc("Hard cap on how many ghosts can exist at once.")
+        .addSlider((sl) => sl.setLimits(4, 60, 1).setValue(s.ghostMaxConcurrent).setDynamicTooltip().onChange(set("ghostMaxConcurrent")));
+    }
+
+    // ── Effects ─────────────────────────────────────────────
+    section("Effects", "Extra flourishes. Mix and match — each is independent.");
+
+    new Setting(containerEl)
+      .setName("Popping letters")
+      .setDesc("Flings the character you just typed up off the caret.")
+      .addToggle((toggle) => toggle.setValue(s.popLetters).onChange(set("popLetters")));
+
+    new Setting(containerEl)
+      .setName("Pixel trail")
+      .setDesc("Scatters a few fading pixels as the caret moves.")
+      .addToggle((toggle) => toggle.setValue(s.flameTrail).onChange(set("flameTrail")));
+
+    new Setting(containerEl)
+      .setName("Motion smear")
+      .setDesc("Stretches the caret toward its target as it glides.")
+      .addToggle((toggle) => toggle.setValue(s.smear).onChange(setAndRedraw("smear")));
+
+    if (s.smear) {
+      new Setting(containerEl)
+        .setName("Stiffness")
+        .setDesc("How firmly the leading edge tracks the caret.")
+        .addSlider((sl) => sl.setLimits(0.1, 1, 0.05).setValue(s.smearStiffness).setDynamicTooltip().onChange(set("smearStiffness")));
+
+      new Setting(containerEl)
+        .setName("Trailing stiffness")
+        .setDesc("How firmly the trailing edge catches up. Lower means a longer smear.")
+        .addSlider((sl) => sl.setLimits(0.05, 1, 0.05).setValue(s.smearTrailingStiffness).setDynamicTooltip().onChange(set("smearTrailingStiffness")));
+
+      new Setting(containerEl)
+        .setName("Damping")
+        .setDesc("How quickly the smear settles. Lower is bouncier.")
+        .addSlider((sl) => sl.setLimits(0.05, 1, 0.05).setValue(s.smearDamping).setDynamicTooltip().onChange(set("smearDamping")));
     }
 
     new Setting(containerEl)
-      .setName("Energy Beam")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.energyEffect).onChange(setAndRedraw("energyEffect")));
+      .setName("Energy beam")
+      .setDesc("Fills the caret with an animated energy gradient.")
+      .addToggle((toggle) => toggle.setValue(s.energyEffect).onChange(setAndRedraw("energyEffect")));
 
-    if (this.plugin.settings.energyEffect) {
+    if (s.energyEffect) {
       new Setting(containerEl)
-        .setName("Beam Speed")
-        .addSlider((s) => s.setLimits(0.2, 3, 0.1).setValue(this.plugin.settings.energySpeed).setDynamicTooltip().onChange(set("energySpeed")));
+        .setName("Beam speed")
+        .setDesc("How fast the energy gradient animates.")
+        .addSlider((sl) => sl.setLimits(0.2, 3, 0.1).setValue(s.energySpeed).setDynamicTooltip().onChange(set("energySpeed")));
     }
 
     new Setting(containerEl)
-      .setName("CRT Effect")
-      .addToggle((toggle) => toggle.setValue(this.plugin.settings.crtEffect).onChange(setAndRedraw("crtEffect")));
+      .setName("Cursor trail")
+      .setDesc("Leaves a fading afterimage of the caret as it moves — old-monitor phosphor persistence. Move the caret to see it.")
+      .addToggle((toggle) => toggle.setValue(s.crtEffect).onChange(setAndRedraw("crtEffect")));
 
-    if (this.plugin.settings.crtEffect) {
+    if (s.crtEffect) {
       new Setting(containerEl)
-        .setName("Trail Length")
-        .addSlider((s) => s.setLimits(0, 30, 1).setValue(this.plugin.settings.trailLength).setDynamicTooltip().onChange(set("trailLength")));
+        .setName("Trail length")
+        .setDesc("How many afterimages trail behind the caret.")
+        .addSlider((sl) => sl.setLimits(0, 30, 1).setValue(s.trailLength).setDynamicTooltip().onChange(set("trailLength")));
 
       new Setting(containerEl)
-        .setName("Trail Fade Time")
-        .addSlider((s) => s.setLimits(50, 1500, 25).setValue(this.plugin.settings.trailFadeMs).setDynamicTooltip().onChange(set("trailFadeMs")));
+        .setName("Trail fade time")
+        .setDesc("How long each afterimage lingers, in milliseconds.")
+        .addSlider((sl) => sl.setLimits(50, 1500, 25).setValue(s.trailFadeMs).setDynamicTooltip().onChange(set("trailFadeMs")));
 
       new Setting(containerEl)
         .setName("Glow")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.glow).onChange(set("glow")));
+        .setDesc("Adds a soft glow around the caret.")
+        .addToggle((toggle) => toggle.setValue(s.glow).onChange(set("glow")));
     }
 
+    // ── Torch spotlight ─────────────────────────────────────
+    section("Torch spotlight", "Dim the workspace and carry a pool of light with the caret.");
+
     new Setting(containerEl)
-      .setName("Torch Spotlight")
+      .setName("Torch spotlight")
+      .setDesc("Darkens everything except a follow-the-caret spotlight.")
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.torchEffect).onChange(async (value) => {
+        toggle.setValue(s.torchEffect).onChange(async (value) => {
           this.plugin.settings.torchEffect = value;
           await this.plugin.saveSettings();
           if (this.plugin.settings.enabled) {
@@ -2107,47 +2147,55 @@ class CursorSmithSettingTab extends PluginSettingTab {
         })
       );
 
-    if (this.plugin.settings.torchEffect) {
-      containerEl.createEl("h4", { text: "Spotlight" });
+    if (s.torchEffect) {
+      sub("Spotlight");
 
       new Setting(containerEl)
         .setName("Follow")
+        .setDesc("What the spotlight tracks.")
         .addDropdown((d) =>
           d
-            .addOptions({ caret: "Text Cursor Only", mouse: "Mouse Pointer Only", auto: "Auto Intelligent Swap" })
-            .setValue(this.plugin.settings.overlayFollowMode)
+            .addOptions({ caret: "Text cursor only", mouse: "Mouse pointer only", auto: "Auto (intelligent swap)" })
+            .setValue(s.overlayFollowMode)
             .onChange(set("overlayFollowMode"))
         );
 
       new Setting(containerEl)
-        .setName("Light Size")
-        .addSlider((s) => s.setLimits(100, 800, 10).setValue(this.plugin.settings.overlayRadius).setDynamicTooltip().onChange(set("overlayRadius")));
+        .setName("Light size")
+        .setDesc("Radius of the lit area, in pixels.")
+        .addSlider((sl) => sl.setLimits(100, 800, 10).setValue(s.overlayRadius).setDynamicTooltip().onChange(set("overlayRadius")));
 
       new Setting(containerEl)
-        .setName("Light Color")
-        .addColorPicker((cp) => cp.setValue(this.plugin.settings.overlayColor).onChange(set("overlayColor")));
+        .setName("Light colour")
+        .setDesc("Tint of the spotlight.")
+        .addColorPicker((cp) => cp.setValue(s.overlayColor).onChange(set("overlayColor")));
 
       new Setting(containerEl)
-        .setName("Follow Speed")
-        .addSlider((s) => s.setLimits(0.05, 1, 0.05).setValue(this.plugin.settings.overlaySpeed).setDynamicTooltip().onChange(set("overlaySpeed")));
+        .setName("Follow speed")
+        .setDesc("How quickly the spotlight chases its target.")
+        .addSlider((sl) => sl.setLimits(0.05, 1, 0.05).setValue(s.overlaySpeed).setDynamicTooltip().onChange(set("overlaySpeed")));
 
-      containerEl.createEl("h4", { text: "Environment" });
+      sub("Environment");
 
       new Setting(containerEl)
         .setName("Darkness")
-        .addSlider((s) => s.setLimits(0.2, 1, 0.01).setValue(this.plugin.settings.overlayDarkness).setDynamicTooltip().onChange(set("overlayDarkness")));
+        .setDesc("How dark everything outside the spotlight gets.")
+        .addSlider((sl) => sl.setLimits(0.2, 1, 0.01).setValue(s.overlayDarkness).setDynamicTooltip().onChange(set("overlayDarkness")));
 
       new Setting(containerEl)
-        .setName("Glow Strength")
-        .addSlider((s) => s.setLimits(0, 1, 0.05).setValue(this.plugin.settings.overlayIntensity).setDynamicTooltip().onChange(set("overlayIntensity")));
+        .setName("Glow strength")
+        .setDesc("Intensity of the spotlight's inner glow.")
+        .addSlider((sl) => sl.setLimits(0, 1, 0.05).setValue(s.overlayIntensity).setDynamicTooltip().onChange(set("overlayIntensity")));
 
       new Setting(containerEl)
         .setName("Flicker")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.overlayFlicker).onChange(set("overlayFlicker")));
+        .setDesc("Adds a subtle candle-like flicker to the light.")
+        .addToggle((toggle) => toggle.setValue(s.overlayFlicker).onChange(set("overlayFlicker")));
 
       new Setting(containerEl)
-        .setName("Keep Sidebars Lit")
-        .addToggle((toggle) => toggle.setValue(this.plugin.settings.overlaySpareSidebars).onChange(set("overlaySpareSidebars")));
+        .setName("Keep sidebars lit")
+        .setDesc("Leaves the side panels at normal brightness.")
+        .addToggle((toggle) => toggle.setValue(s.overlaySpareSidebars).onChange(set("overlaySpareSidebars")));
     }
   }
 }

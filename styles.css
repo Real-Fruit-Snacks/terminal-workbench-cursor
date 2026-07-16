@@ -77,20 +77,52 @@ body.retro-box-cursor-hide-native .cm-line {
 .twc-settings h3 {
   font-family: var(--twb-font-mono, var(--font-monospace, monospace));
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-size: 0.68rem;
-  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--twb-accent, var(--interactive-accent, #63f2ab));
+  margin: 2.2em 0 0.15em;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--twb-border, var(--background-modifier-border));
+}
+.twc-settings h3::before {
+  content: "\203A"; /* terminal prompt marker */
+  margin-right: 0.5em;
+  color: var(--twb-accent, var(--interactive-accent, #63f2ab));
+}
+.twc-settings .twc-section-desc {
+  font-size: 0.82em;
+  line-height: 1.5;
   color: var(--twb-text-muted, var(--text-muted));
-  margin-top: 1.6em;
+  margin: 0.1em 0 0.4em;
+  max-width: 62ch;
+}
+.twc-settings h4 {
+  font-family: var(--twb-font-mono, var(--font-monospace, monospace));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--twb-text-faint, var(--text-faint));
+  margin: 1.3em 0 0.1em;
 }
 .twc-settings .setting-item {
   border-top: 1px solid var(--twb-border, var(--background-modifier-border));
+  padding-top: 0.7em;
+  padding-bottom: 0.7em;
+}
+/* the first row after a heading or section intro shouldn't double a border */
+.twc-settings h3 + .setting-item,
+.twc-settings h4 + .setting-item,
+.twc-settings .twc-section-desc + .setting-item {
+  border-top: none;
 }
 .twc-settings .setting-item-name {
   font-family: var(--twb-font-ui, inherit);
 }
 .twc-settings .setting-item-description {
   color: var(--twb-text-faint, var(--text-faint));
+  font-size: 0.85em;
 }
 .twc-settings input[type="text"]:focus,
 .twc-settings input[type="range"]:focus {

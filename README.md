@@ -38,8 +38,8 @@ accent ramp, and every effect is individually toggleable in settings.
   adjustable width, opacity, glow, and blink.
 - **Torch spotlight** — dim the workspace and follow the caret or pointer with a
   soft pool of light; runs alongside any cursor style.
-- **More effects** — popping letters, a fading pixel trail, motion smear, a CRT
-  trail, and an energy beam, each independently tunable.
+- **More effects** — popping letters, a fading pixel trail, motion smear, a
+  cursor trail (afterimage), and an energy beam, each independently tunable.
 - **Terminal Workbench integration** — cursor and ghost colours resolve from the
   `--twb-*` accent ramp, with graceful hex fallbacks when the theme is absent, so
   it looks native under the theme and clean without it. The settings panel is

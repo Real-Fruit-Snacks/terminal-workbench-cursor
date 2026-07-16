@@ -4,6 +4,16 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-07-15
+
+### Changed
+- Overhauled the settings panel: grouped into clear sections (General,
+  Appearance, Blinking, Smooth movement, Ghost Trail, Effects, Torch spotlight),
+  each with a short intro and a description on every control.
+- Ghost Trail now defaults to the multicolour **Cycle palette** mode.
+- Renamed the **CRT** effect to **Cursor trail** (a fading afterimage of the
+  caret as it moves) and made the afterimage more visible.
+
 ## [1.0.2] - 2026-07-15
 
 ### Changed
