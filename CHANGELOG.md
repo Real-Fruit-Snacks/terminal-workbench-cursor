@@ -4,6 +4,13 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-07-15
+
+### Changed
+- New project cover banner — added depth (pane shadow and an accent bloom) and a
+  graceful multicolour ghost plume — plus a high-resolution 3:2 PNG for the
+  README, listings, and social previews. No changes to the plugin code since 1.0.3.
+
 ## [1.0.3] - 2026-07-15
 
 ### Changed
