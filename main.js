@@ -1310,11 +1310,6 @@ module.exports = class CursorSmithPlugin extends Plugin {
     while (this.trail.length > max) this.trail.shift();
   }
 
-  prefersReducedMotion(doc) {
-    const win = (doc && doc.defaultView) || window;
-    return !!(win.matchMedia && win.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }
-
   configureGhostThrottles() {
     this.ghostTypeThrottle = makeThrottle(this.settings.ghostMinIntervalMs);
     this.ghostMoveThrottle = makeThrottle(this.settings.ghostMinIntervalMs);
@@ -1322,8 +1317,6 @@ module.exports = class CursorSmithPlugin extends Plugin {
 
   maybeSpawnGhost(anchor, throttle) {
     if (!this.settings.ghostTrail) return;
-    const doc = this.canvas ? this.canvas.ownerDocument : document;
-    if (this.prefersReducedMotion(doc)) return;
     const now = performance.now();
     if (!throttle.allow(now, this.ghosts.length, this.settings.ghostMaxConcurrent)) return;
     this.spawnGhost(anchor);
@@ -1466,11 +1459,6 @@ module.exports = class CursorSmithPlugin extends Plugin {
     if (!ctx) return;
     const win = this.canvas.ownerDocument.defaultView || window;
     ctx.clearRect(0, 0, win.innerWidth, win.innerHeight);
-    // Cached for the caret draw path below (fillCursorShape / drawGenericCaret /
-    // drawRetroBox), which is only ever invoked from here, so motion smear and
-    // the energy-beam animation can be short-circuited under reduced-motion.
-    const reduce = this.prefersReducedMotion(this.canvas.ownerDocument);
-    this.reduceMotion = reduce;
 
     this.drawLettersParticles();
     this.drawFlamePixels();
@@ -1506,7 +1494,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
   }
 
   fillCursorShape(ctx, rx, ry, rw, rh) {
-    const q = this.settings.smear && !this.reduceMotion ? this.smearQuad : null;
+    const q = this.settings.smear ? this.smearQuad : null;
     const corners = q || {
       tl: { x: rx, y: ry },
       tr: { x: rx + rw, y: ry },
@@ -1604,7 +1592,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
       rh = active.h;
     }
 
-    ctx.fillStyle = settings.energyEffect && !this.reduceMotion
+    ctx.fillStyle = settings.energyEffect
       ? this.createEnergyGradient(rx, ry, rw, rh, color, 0.9 * blinkAlpha * opacity)
       : hexToRgba(color, 0.9 * blinkAlpha * opacity);
     this.fillCursorShape(ctx, rx, ry, rw, rh);
@@ -1690,7 +1678,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
         this.fillCursorShape(ctx, active.x, active.top, renderW, active.h);
         ctx.shadowBlur = 0;
       }
-      ctx.fillStyle = settings.energyEffect && !this.reduceMotion
+      ctx.fillStyle = settings.energyEffect
         ? this.createEnergyGradient(active.x, active.top, renderW, active.h, color, 0.9 * blinkAlpha * opacity)
         : hexToRgba(color, 0.9 * blinkAlpha * opacity);
       this.fillCursorShape(ctx, active.x, active.top, renderW, active.h);

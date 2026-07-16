@@ -26,7 +26,7 @@ Its headline addition to the family is the **Ghost Trail**: a miniature
 ghost peels off the text as you type — and, if you like, off the caret as it
 moves — then rises, drifts, and fades. Colours come from the
 [Terminal Workbench](https://github.com/Real-Fruit-Snacks/terminal-workbench-design-system)
-accent ramp, and every bit of motion respects your reduced-motion setting.
+accent ramp, and every effect is individually toggleable in settings.
 
 ## Features
 
@@ -44,16 +44,15 @@ accent ramp, and every bit of motion respects your reduced-motion setting.
   `--twb-*` accent ramp, with graceful hex fallbacks when the theme is absent, so
   it looks native under the theme and clean without it. The settings panel is
   restyled in the terminal idiom.
-- **Accessible** — Ghost Trail is off by default, and all motion (ghosts, smear,
-  energy beam) honours `prefers-reduced-motion`.
+- **Opt-in effects** — Ghost Trail ships off, and every effect is individually
+  toggleable, so you decide exactly how much motion you want.
 
 ## Ghost Trail
 
 Enable it under **Settings → Terminal Workbench Cursor → Effects → Ghost Trail**.
 Choose whether ghosts spawn on typing, on cursor movement, or both; set the
 density, size, rise speed, drift, lifetime, and opacity; and pick a colour mode —
-hold one accent, cycle the palette, or match your cursor. With reduced motion
-enabled at the OS level, no ghosts spawn.
+hold one accent, cycle the palette, or match your cursor.
 
 ## Install
 

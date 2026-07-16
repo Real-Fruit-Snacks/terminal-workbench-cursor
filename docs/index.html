@@ -8,7 +8,7 @@
     <title>Terminal Workbench Cursor — a cursor engine with a ghost trail</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta property="og:title" content="Terminal Workbench Cursor — a cursor engine with a ghost trail">
-    <meta property="og:description" content="An Obsidian cursor engine for the Terminal Workbench family, with a Ghost Trail that rises from the text you type. Respects reduced motion; degrades cleanly without the theme.">
+    <meta property="og:description" content="An Obsidian cursor engine for the Terminal Workbench family, with a Ghost Trail that rises from the text you type. Every effect toggleable; degrades cleanly without the theme.">
     <meta property="og:type" content="website">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +39,7 @@
         <div class="hero-content">
             <div class="hero-badge manifest"><span class="dot"></span>Free &amp; open source · MIT</div>
             <h1 class="hero-title">A cursor engine, with a <em>ghost trail</em>.</h1>
-            <p class="hero-subtitle">Terminal Workbench Cursor forges your caret — box, line, or underline, smooth gliding, a torch spotlight — and lets a little ghost peel off the text as you type. Colours come from the Terminal Workbench palette; motion respects your accessibility settings.</p>
+            <p class="hero-subtitle">Terminal Workbench Cursor forges your caret — box, line, or underline, smooth gliding, a torch spotlight — and lets a little ghost peel off the text as you type. Colours come from the Terminal Workbench palette; every effect is yours to toggle.</p>
             <div class="hero-actions">
                 <a href="https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases/latest" class="btn btn--primary" target="_blank" rel="noopener">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -71,7 +71,7 @@
                         <span class="ghost g5" style="left:192px; top:121px"><svg viewBox="0 0 16 16"><path class="body" d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z"/><rect class="eye" x="5" y="6" width="2" height="3"/><rect class="eye" x="9" y="6" width="2" height="3"/></svg></span>
                     </div>
                 </div>
-                <div class="mock-foot"><span class="manifest">Ghost Trail: <b>on</b> · rises from typed text · respects reduced-motion</span></div>
+                <div class="mock-foot"><span class="manifest">Ghost Trail: <b>on</b> · rises from typed text · off by default</span></div>
             </div>
         </div>
     </section>
@@ -112,8 +112,8 @@
                 </div>
                 <div class="feature-card" data-reveal>
                     <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
-                    <h3>Calm by default</h3>
-                    <p>Ghost Trail ships off, and every animation — ghosts, smear, energy beam — honours <code>prefers-reduced-motion</code>, so the caret stays still when you need it to.</p>
+                    <h3>Opt-in by design</h3>
+                    <p>Ghost Trail ships off, and every effect is individually toggleable, so you decide exactly how much motion the caret has — from dead-still to a full ghost stream.</p>
                 </div>
             </div>
         </div>
@@ -145,7 +145,7 @@
                     <div class="step-marker"><span class="step-num">3</span></div>
                     <div class="step-body">
                         <h3>Pick a colour mode</h3>
-                        <p>Hold a single accent, cycle the whole palette like a booped pet, or match your cursor colour. With reduced motion on, no ghosts spawn at all.</p>
+                        <p>Hold a single accent, cycle the whole palette like a booped pet, or match your cursor colour. Toggle it off any time to go back to a still caret.</p>
                     </div>
                 </div>
             </div>
