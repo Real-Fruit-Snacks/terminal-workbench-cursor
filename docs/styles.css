@@ -175,15 +175,29 @@ section { position: relative; }
 .mock-foot b { color: var(--twb-accent); }
 
 /* ---------- Hero editor / ghost-trail demo ---------- */
+/* accent bloom behind the visual, for depth (mirrors the cover banner) */
+.hero-visual::before {
+  content: ""; position: absolute; z-index: -1;
+  left: 8%; right: 30%; top: 12%; bottom: 14%;
+  background: radial-gradient(ellipse 60% 55% at 40% 50%, var(--twb-accent) 0%, transparent 70%);
+  opacity: 0.1; pointer-events: none; filter: blur(4px);
+}
 .mock-editor {
   position: relative; padding: 20px 22px; min-height: 250px;
   font-family: var(--twb-font-mono); font-size: 13px; line-height: 2.15;
   overflow: hidden;
 }
-.mock-line { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.mock-line { position: relative; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.mock-line--active {
+  background: var(--twb-active-line, rgba(107, 220, 255, 0.08));
+  box-shadow: inset 2px 0 0 var(--twb-accent);
+  border-radius: 0 var(--twb-radius-s) var(--twb-radius-s) 0;
+  margin: 0 -22px; padding: 0 22px;
+}
 .mock-gutter { width: 16px; text-align: right; color: var(--twb-text-faint); opacity: 0.55; user-select: none; font-size: 11px; }
+.mock-line--active .mock-gutter { color: var(--twb-accent); opacity: 0.9; }
 .mock-w { display: inline-block; height: 8px; border-radius: 4px; background: var(--twb-text-faint); opacity: 0.35; }
-.mock-line--active .mock-w { background: var(--twb-text-soft); opacity: 0.85; }
+.mock-line--active .mock-w { background: var(--twb-text-soft); opacity: 0.9; }
 .mock-caret {
   display: inline-block; width: 8px; height: 16px; margin-left: 2px;
   background: var(--twb-accent); border-radius: 1px; box-shadow: var(--twb-glow);
@@ -192,18 +206,32 @@ section { position: relative; }
 @keyframes twc-blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0.15; } }
 
 .ghost-field { position: absolute; inset: 0; pointer-events: none; }
-.ghost { position: absolute; width: 18px; height: 18px; opacity: 0; will-change: transform, opacity; animation: twc-rise 3.6s ease-out infinite; }
+.ghost {
+  position: absolute; width: 20px; height: 20px; opacity: 0;
+  color: var(--twb-accent);
+  filter: drop-shadow(0 0 4px currentColor);
+  will-change: transform, opacity;
+  animation: twc-rise 3.9s cubic-bezier(0.33, 0, 0.4, 1) infinite;
+}
 .ghost svg { width: 100%; height: 100%; display: block; }
-.ghost .body { fill: var(--twb-accent); }
+.ghost .body { fill: currentColor; }
 .ghost .eye { fill: var(--twb-bg-1); }
-.ghost.g2 { animation-delay: 0.72s; } .ghost.g2 .body { fill: var(--twb-accent-alt); }
-.ghost.g3 { animation-delay: 1.44s; } .ghost.g3 .body { fill: var(--twb-warm); }
-.ghost.g4 { animation-delay: 2.16s; } .ghost.g4 .body { fill: var(--twb-violet); }
-.ghost.g5 { animation-delay: 2.88s; } .ghost.g5 .body { fill: var(--twb-accent); }
+/* full accent ramp, staggered into a rising plume that fans as it climbs */
+.ghost.g1 { color: var(--twb-accent);     animation-delay: 0s;   --dx: -20px; }
+.ghost.g2 { color: var(--twb-accent-alt); animation-delay: 0.6s; --dx: -6px; }
+.ghost.g3 { color: var(--twb-warm);       animation-delay: 1.2s; --dx: -30px; }
+.ghost.g4 { color: var(--twb-violet);     animation-delay: 1.8s; --dx: -12px; }
+.ghost.g5 { color: var(--twb-orange);     animation-delay: 2.4s; --dx: -26px; }
+.ghost.g6 { color: var(--twb-red);        animation-delay: 3.0s; --dx: -16px; }
 @keyframes twc-rise {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.72); }
-  14%  { opacity: 0.92; }
-  100% { opacity: 0; transform: translate(-16px, -132px) scale(1.06); }
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  12%  { opacity: 0.95; }
+  70%  { opacity: 0.65; }
+  100% { opacity: 0; transform: translate(var(--dx, -18px), -140px) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mock-caret { animation: none; }
+  .ghost { animation: none; opacity: 0; }
 }
 
 /* ---------- Features ---------- */
