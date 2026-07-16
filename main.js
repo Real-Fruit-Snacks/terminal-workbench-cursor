@@ -1,16 +1,66 @@
 const { Plugin, PluginSettingTab, Setting } = require("obsidian");
-let buildGhostSvg, resolvePalette, stepGhost, makeThrottle;
-try {
-  ({ buildGhostSvg, resolvePalette, stepGhost, makeThrottle } = require("./ghost-core.js"));
-} catch (e) {
-  // Unbundled plugin: if the relative require can't be resolved, disable Ghost
-  // Trail gracefully instead of bricking the whole plugin. Stubs keep every
-  // ghost call site inert (throttle never allows a spawn; physics reports dead).
-  console.error("Terminal Workbench Cursor: ghost-core failed to load; Ghost Trail disabled.", e);
-  buildGhostSvg = () => "";
-  resolvePalette = () => [];
-  stepGhost = () => ({ alive: false, x: 0, y: 0, alpha: 0, scale: 1 });
-  makeThrottle = () => ({ allow: () => false, reset: () => {} });
+
+// --- Ghost Trail helpers (inlined so the plugin is a single self-contained
+// file: no relative require to resolve at runtime, which some Obsidian/Electron
+// builds do not support). `ghost-core.js` in the repo is the unit-tested
+// reference for this exact logic; keep the two in sync. ---
+function buildGhostSvg(bodyHex, eyeHex) {
+  return (
+    '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="' +
+    bodyHex +
+    '"/>' +
+    '<rect x="5" y="6" width="2" height="3" fill="' + eyeHex + '"/>' +
+    '<rect x="9" y="6" width="2" height="3" fill="' + eyeHex + '"/>' +
+    "</svg>"
+  );
+}
+
+const TWB_RAMP = [
+  { token: "--twb-accent", fallback: "#63f2ab" },
+  { token: "--twb-accent-alt", fallback: "#6bdcff" },
+  { token: "--twb-warm", fallback: "#f0c674" },
+  { token: "--twb-violet", fallback: "#b78cff" },
+  { token: "--twb-orange", fallback: "#f7a35c" },
+  { token: "--twb-red", fallback: "#ff6e7a" },
+];
+
+function resolvePalette(readVar) {
+  return TWB_RAMP.map(({ token, fallback }) => {
+    const v = (readVar(token) || "").trim();
+    return v || fallback;
+  });
+}
+
+function stepGhost(ghost, now, cfg) {
+  const elapsed = now - ghost.start;
+  const t = elapsed / cfg.lifetimeMs;
+  const rise = cfg.riseSpeed * (elapsed / 1000);
+  const drift = Math.sin(elapsed / 180 + ghost.phase) * cfg.driftAmp;
+  const bob = Math.sin(elapsed / 90 + ghost.phase) * cfg.bob;
+  const alpha = ghost.peakAlpha * Math.max(0, 1 - t * t);
+  return {
+    alive: t < 1,
+    x: ghost.x + drift,
+    y: ghost.y - rise + bob,
+    alpha,
+    scale: 0.85 + 0.15 * Math.min(1, elapsed / 120),
+  };
+}
+
+function makeThrottle(minIntervalMs) {
+  let last = -Infinity;
+  return {
+    allow(now, concurrent, maxConcurrent) {
+      if (concurrent >= maxConcurrent) return false;
+      if (now - last < minIntervalMs) return false;
+      last = now;
+      return true;
+    },
+    reset() {
+      last = -Infinity;
+    },
+  };
 }
 
 const DEFAULT_SETTINGS = {
@@ -64,7 +114,7 @@ const DEFAULT_SETTINGS = {
   ghostOnMove: false,
   ghostMinIntervalMs: 55,
   ghostMaxConcurrent: 24,
-  ghostSize: 18,
+  ghostSize: 24,
   ghostRiseSpeed: 70,
   ghostDrift: 6,
   ghostLifetimeMs: 750,
@@ -2001,7 +2051,7 @@ class CursorSmithSettingTab extends PluginSettingTab {
 
       new Setting(containerEl)
         .setName("Size")
-        .addSlider((s) => s.setLimits(8, 40, 1).setValue(this.plugin.settings.ghostSize).setDynamicTooltip().onChange(set("ghostSize")));
+        .addSlider((s) => s.setLimits(8, 64, 1).setValue(this.plugin.settings.ghostSize).setDynamicTooltip().onChange(set("ghostSize")));
 
       new Setting(containerEl)
         .setName("Rise speed")

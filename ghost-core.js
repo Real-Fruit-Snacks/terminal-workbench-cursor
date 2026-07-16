@@ -6,7 +6,7 @@
 // Path is the pet's body outline (rounded top, scalloped skirt); eyes are two rects.
 function buildGhostSvg(bodyHex, eyeHex) {
   return (
-    '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">' +
+    '<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">' +
     '<path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="' +
     bodyHex +
     '"/>' +

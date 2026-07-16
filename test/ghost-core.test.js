@@ -14,6 +14,10 @@ test("buildGhostSvg embeds the given fills and a valid svg root", () => {
   assert.ok(svg.includes('fill="#63f2ab"'), "body fill present");
   assert.ok(svg.includes('fill="#090c0d"'), "eye fill present");
   assert.ok(svg.includes("viewBox=\"0 0 16 16\""));
+  // Explicit width/height give the SVG a defined intrinsic size so it always
+  // rasterizes into an <img> (some engines return naturalWidth 0 without them).
+  assert.ok(svg.includes('width="16"'), "explicit width present");
+  assert.ok(svg.includes('height="16"'), "explicit height present");
 });
 
 test("TWB_RAMP has six accent entries in cycle order", () => {
