@@ -56,11 +56,15 @@ hold one accent, cycle the palette, or match your cursor.
 
 ## Install
 
-**Manual (recommended)** — download `main.js`, `manifest.json`, `styles.css`, and
+**Community plugins** — once it's approved for the directory, search for
+**Terminal Workbench Cursor** in **Settings → Community plugins → Browse**,
+install, and enable. Until then, use one of the methods below.
+
+**Manual** — download `main.js`, `manifest.json`, `styles.css`, and
 `versions.json` from the
 [latest release](https://github.com/Real-Fruit-Snacks/terminal-workbench-cursor/releases/latest),
 place them in `<vault>/.obsidian/plugins/terminal-workbench-cursor/`, and enable
-**Terminal Workbench Cursor** in Community plugins.
+**Terminal Workbench Cursor** under **Settings → Community plugins**.
 
 **BRAT** — add the beta plugin `Real-Fruit-Snacks/terminal-workbench-cursor` in
 [BRAT](https://github.com/TfTHacker/obsidian42-brat), then enable it.
