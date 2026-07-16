@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img alt="Terminal Workbench Cursor — a cursor engine with a ghost trail" src="docs/assets/banner.svg" width="760" />
+  <img alt="Terminal Workbench Cursor — a cursor engine with a ghost trail" src="docs/assets/banner.png" width="760" />
 
   **A cursor engine for the Terminal Workbench family — box, line, and underline carets, a torch spotlight, and a Ghost Trail that peels a little ghost off the text as you type.**
 

@@ -1,80 +1,105 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Terminal Workbench Cursor — ghosts rise from the text you type">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#090c0d"/>
-      <stop offset="1" stop-color="#0e1214"/>
+      <stop offset="0" stop-color="#080b0c"/>
+      <stop offset="0.55" stop-color="#0b1012"/>
+      <stop offset="1" stop-color="#0e1416"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#63f2ab" stop-opacity="0.15"/>
+      <stop offset="0.6" stop-color="#63f2ab" stop-opacity="0.04"/>
+      <stop offset="1" stop-color="#63f2ab" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="paneShadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="24" stdDeviation="34" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+    <filter id="ghostGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3.4"/>
+    </filter>
   </defs>
+
   <rect width="1200" height="800" fill="url(#bg)"/>
 
-  <!-- ============ top: wordmark ============ -->
+  <!-- soft accent bloom behind the ghost plume, for depth + focal point -->
+  <ellipse cx="566" cy="470" rx="330" ry="286" fill="url(#glow)"/>
+
+  <!-- ============ wordmark ============ -->
   <g font-family="'Cascadia Code','JetBrains Mono',Consolas,'DejaVu Sans Mono',monospace" text-anchor="middle">
-    <text x="600" y="112" font-size="18" font-weight="700" letter-spacing="5" fill="#879994"><tspan fill="#63f2ab">&#10095;</tspan>&#160;OBSIDIAN PLUGIN</text>
-    <text x="600" y="176" font-size="40" font-weight="700" letter-spacing="6" fill="#b4c3bd">TERMINAL WORKBENCH</text>
-    <text x="600" y="262" font-size="90" font-weight="700" letter-spacing="4" fill="#63f2ab">CURSOR</text>
-    <line x1="360" y1="298" x2="840" y2="298" stroke="#2a363d" stroke-width="2"/>
-    <text x="600" y="342" font-size="18" font-weight="600" letter-spacing="5" fill="#879994">GHOSTS RISE FROM THE TEXT YOU TYPE</text>
+    <text x="600" y="106" font-size="17" font-weight="700" letter-spacing="6.5" fill="#7c8e89"><tspan fill="#63f2ab">&#10095;</tspan>&#160;&#160;OBSIDIAN PLUGIN</text>
+    <text x="600" y="168" font-size="37" font-weight="700" letter-spacing="7.5" fill="#aebbb5">TERMINAL WORKBENCH</text>
+    <text x="600" y="252" font-size="94" font-weight="700" letter-spacing="7" fill="#63f2ab">CURSOR</text>
+    <line x1="452" y1="288" x2="748" y2="288" stroke="#2a363d" stroke-width="1.5"/>
+    <text x="600" y="324" font-size="16.5" font-weight="600" letter-spacing="6" fill="#7c8e89">GHOSTS RISE FROM THE TEXT YOU TYPE</text>
   </g>
 
-  <!-- ============ middle: editor pane with a ghost trail ============ -->
-  <!-- pane -->
-  <rect x="300" y="384" width="600" height="300" rx="12" fill="#0e1214" stroke="#2a363d" stroke-width="1.5"/>
-  <line x1="300" y1="426" x2="900" y2="426" stroke="#2a363d" stroke-width="1.5"/>
-  <circle cx="330" cy="405" r="5" fill="#39484f"/>
-  <circle cx="348" cy="405" r="5" fill="#39484f"/>
-  <circle cx="366" cy="405" r="5" fill="#39484f"/>
-  <text x="392" y="411" font-family="'Cascadia Code','JetBrains Mono',Consolas,monospace" font-size="12" font-weight="700" letter-spacing="2.5" fill="#879994">EDITOR &#8212; GHOST TRAIL</text>
+  <!-- ============ editor pane ============ -->
+  <g filter="url(#paneShadow)">
+    <rect x="326" y="392" width="548" height="300" rx="14" fill="#0d1113" stroke="#2a363d" stroke-width="1.5"/>
+  </g>
+  <!-- inner top highlight for a little depth -->
+  <path d="M341 393 h518" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+  <!-- title bar -->
+  <line x1="326" y1="434" x2="874" y2="434" stroke="#2a363d" stroke-width="1.5"/>
+  <circle cx="352" cy="413" r="4.5" fill="#39484f"/>
+  <circle cx="370" cy="413" r="4.5" fill="#39484f"/>
+  <circle cx="388" cy="413" r="4.5" fill="#39484f"/>
+  <text x="412" y="418" font-family="'Cascadia Code','JetBrains Mono',Consolas,monospace" font-size="12" font-weight="700" letter-spacing="2.5" fill="#7c8e89">EDITOR &#8212; GHOST TRAIL</text>
 
   <!-- text lines (words as pills) -->
   <g>
     <!-- line 1 -->
-    <rect x="336" y="466" width="120" height="9" rx="4.5" fill="#63736f" opacity="0.55"/>
-    <rect x="470" y="466" width="70" height="9" rx="4.5" fill="#63736f" opacity="0.55"/>
-    <rect x="556" y="466" width="150" height="9" rx="4.5" fill="#63736f" opacity="0.5"/>
+    <rect x="356" y="461" width="118" height="9" rx="4.5" fill="#63736f" opacity="0.5"/>
+    <rect x="486" y="461" width="66" height="9" rx="4.5" fill="#63736f" opacity="0.5"/>
+    <rect x="566" y="461" width="150" height="9" rx="4.5" fill="#63736f" opacity="0.45"/>
     <!-- line 2 -->
-    <rect x="336" y="504" width="92" height="9" rx="4.5" fill="#63736f" opacity="0.5"/>
-    <rect x="444" y="504" width="176" height="9" rx="4.5" fill="#63736f" opacity="0.45"/>
-    <rect x="636" y="504" width="60" height="9" rx="4.5" fill="#63736f" opacity="0.45"/>
-    <!-- active line: brighter words + block caret where the ghost is born -->
-    <rect x="336" y="556" width="64" height="10" rx="5" fill="#b4c3bd"/>
-    <rect x="414" y="556" width="112" height="10" rx="5" fill="#b4c3bd"/>
-    <rect x="540" y="549" width="12" height="24" rx="1.5" fill="#63f2ab"/>
+    <rect x="356" y="499" width="90" height="9" rx="4.5" fill="#63736f" opacity="0.45"/>
+    <rect x="460" y="499" width="176" height="9" rx="4.5" fill="#63736f" opacity="0.4"/>
+    <!-- line 3 -->
+    <rect x="356" y="537" width="64" height="9" rx="4.5" fill="#63736f" opacity="0.5"/>
+    <rect x="434" y="537" width="120" height="9" rx="4.5" fill="#63736f" opacity="0.45"/>
+    <!-- active line: brighter words + block caret where the ghosts are born -->
+    <rect x="356" y="573" width="70" height="10" rx="5" fill="#b4c3bd"/>
+    <rect x="440" y="573" width="104" height="10" rx="5" fill="#b4c3bd"/>
+    <rect x="556" y="566" width="12" height="24" rx="1.5" fill="#63f2ab"/>
     <!-- lines below, fading -->
-    <rect x="336" y="604" width="140" height="9" rx="4.5" fill="#63736f" opacity="0.32"/>
-    <rect x="490" y="604" width="88" height="9" rx="4.5" fill="#63736f" opacity="0.3"/>
-    <rect x="336" y="640" width="104" height="9" rx="4.5" fill="#63736f" opacity="0.2"/>
-    <rect x="454" y="640" width="120" height="9" rx="4.5" fill="#63736f" opacity="0.18"/>
+    <rect x="356" y="611" width="140" height="9" rx="4.5" fill="#63736f" opacity="0.3"/>
+    <rect x="510" y="611" width="86" height="9" rx="4.5" fill="#63736f" opacity="0.26"/>
+    <rect x="356" y="647" width="104" height="9" rx="4.5" fill="#63736f" opacity="0.18"/>
+    <rect x="474" y="647" width="120" height="9" rx="4.5" fill="#63736f" opacity="0.15"/>
   </g>
 
-  <!-- rising ghosts (Terminal Workbench Pet, native 16x16 path), fading up the accent ramp -->
+  <!-- ============ multicolour ghost plume (Terminal Workbench Pet, native 16x16) ============ -->
   <g>
-    <!-- g1: just off the caret -->
-    <g transform="translate(524 524) scale(1.5)" opacity="0.95">
+    <g transform="translate(548 534) scale(1.6)" opacity="0.98">
       <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#63f2ab"/>
-      <rect x="5" y="6" width="2" height="3" fill="#0e1214"/><rect x="9" y="6" width="2" height="3" fill="#0e1214"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
     </g>
-    <!-- g2 -->
-    <g transform="translate(506 482) scale(1.3)" opacity="0.78">
+    <g transform="translate(526 496) scale(1.4)" opacity="0.86">
       <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#6bdcff"/>
-      <rect x="5" y="6" width="2" height="3" fill="#0e1214"/><rect x="9" y="6" width="2" height="3" fill="#0e1214"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
     </g>
-    <!-- g3 -->
-    <g transform="translate(492 442) scale(1.05)" opacity="0.55">
+    <g transform="translate(510 460) scale(1.2)" opacity="0.7">
       <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#f0c674"/>
-      <rect x="5" y="6" width="2" height="3" fill="#0e1214"/><rect x="9" y="6" width="2" height="3" fill="#0e1214"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
     </g>
-    <!-- g4 -->
-    <g transform="translate(480 404) scale(0.85)" opacity="0.38">
+    <g transform="translate(502 426) scale(1.05)" opacity="0.54">
       <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#b78cff"/>
-      <rect x="5" y="6" width="2" height="3" fill="#0e1214"/><rect x="9" y="6" width="2" height="3" fill="#0e1214"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
     </g>
-    <!-- g5: escaping above the pane -->
-    <g transform="translate(466 360) scale(0.7)" opacity="0.22">
+    <g transform="translate(504 396) scale(0.9)" opacity="0.4">
+      <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#f7a35c"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
+    </g>
+    <g transform="translate(512 368) scale(0.75)" opacity="0.27">
+      <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#ff6e7a"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
+    </g>
+    <g transform="translate(522 344) scale(0.62)" opacity="0.16">
       <path d="M2 16 V7 Q2 1 8 1 Q14 1 14 7 V16 L12 14.4 L10 16 L8 14.4 L6 16 L4 14.4 Z" fill="#63f2ab"/>
-      <rect x="5" y="6" width="2" height="3" fill="#0e1214"/><rect x="9" y="6" width="2" height="3" fill="#0e1214"/>
+      <rect x="5" y="6" width="2" height="3" fill="#0d1113"/><rect x="9" y="6" width="2" height="3" fill="#0d1113"/>
     </g>
   </g>
 
-  <!-- bottom prompt line -->
-  <text x="600" y="762" text-anchor="middle" font-family="'Cascadia Code','JetBrains Mono',Consolas,monospace" font-size="16" fill="#63736f"><tspan fill="#63f2ab" font-weight="700">&#10095;</tspan> cursor --ghost-trail on <tspan fill="#63f2ab">&#9612;</tspan></text>
+  <!-- ============ bottom prompt ============ -->
+  <text x="600" y="756" text-anchor="middle" font-family="'Cascadia Code','JetBrains Mono',Consolas,monospace" font-size="16" fill="#63736f"><tspan fill="#63f2ab" font-weight="700">&#10095;</tspan> cursor --ghost-trail on <tspan fill="#63f2ab">&#9612;</tspan></text>
 </svg>
