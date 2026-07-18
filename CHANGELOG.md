@@ -4,6 +4,14 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-18
+
+### Changed
+- Fresh installs now lead with the plugin's signature effect: **Ghost Trail is
+  on by default**, and the two effects that spawn competing particles at the
+  same spot — popping letters and the pixel trail — now default off (both
+  remain available in settings). Existing installs keep their saved choices.
+
 ## [1.1.0] - 2026-07-17
 
 A performance overhaul for low-end machines.

@@ -30,10 +30,11 @@ accent ramp, and every effect is individually toggleable in settings.
 
 ## Features
 
-- **Ghost Trail** — a Terminal Workbench Pet ghost spawns from typed characters
-  and, optionally, cursor movement; it rises, drifts, and fades. Triggers,
-  density, size, rise speed, drift, lifetime, opacity, and colour mode
-  (accent / cycle palette / match cursor) are all adjustable. Off by default.
+- **Ghost Trail** — the signature effect, on out of the box: a Terminal
+  Workbench Pet ghost spawns from typed characters and, optionally, cursor
+  movement; it rises, drifts, and fades in multicolour. Triggers, density,
+  size, rise speed, drift, lifetime, opacity, and colour mode
+  (cycle palette / accent / match cursor) are all adjustable.
 - **Cursor styles** — Box, Line, and Underline, with smooth gliding motion,
   adjustable width, opacity, glow, and blink.
 - **Torch spotlight** — dim the workspace and follow the caret or pointer with a
@@ -44,18 +45,20 @@ accent ramp, and every effect is individually toggleable in settings.
   `--twb-*` accent ramp, with graceful hex fallbacks when the theme is absent, so
   it looks native under the theme and clean without it. The settings panel is
   restyled in the terminal idiom.
-- **Opt-in effects** — Ghost Trail ships off, and every effect is individually
-  toggleable, so you decide exactly how much motion you want.
+- **Focused defaults** — a fresh install shows the ghost and nothing that
+  competes with it; every effect is individually toggleable, so you decide
+  exactly how much motion you want.
 - **Light on weak hardware** — the render loop sleeps whenever nothing is
   animating, caret measurements are cached, and a one-switch **Performance
   mode** calms every ambient animation for low-end machines.
 
 ## Ghost Trail
 
-Enable it under **Settings → Terminal Workbench Cursor → Effects → Ghost Trail**.
-Choose whether ghosts spawn on typing, on cursor movement, or both; set the
-density, size, rise speed, drift, lifetime, and opacity; and pick a colour mode —
-hold one accent, cycle the palette, or match your cursor.
+On by default — just type. Tune it under **Settings → Terminal Workbench
+Cursor → Ghost Trail**: choose whether ghosts spawn on typing, on cursor
+movement, or both; set the density, size, rise speed, drift, lifetime, and
+opacity; and pick a colour mode — cycle the palette (default), hold one
+accent, or match your cursor. Turn the toggle off for a plain caret.
 
 ## Install
 

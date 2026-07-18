@@ -93,8 +93,10 @@ const DEFAULT_SETTINGS = {
 
   // --- global caret properties ---
   caretWidthPx: 2,
-  popLetters: true,
-  flameTrail: true,
+  // popLetters/flameTrail default off: they spawn particles at the same
+  // point as the Ghost Trail (the signature effect) and visually bury it.
+  popLetters: false,
+  flameTrail: false,
   cursorOpacity: 1,
   energyEffect: false,
   energySpeed: 1,
@@ -114,7 +116,7 @@ const DEFAULT_SETTINGS = {
   smearDamping: 0.8,
 
   // --- ghost trail effect (Terminal Workbench Pet ghost) ---
-  ghostTrail: false,
+  ghostTrail: true,
   ghostOnType: true,
   ghostOnMove: false,
   ghostMinIntervalMs: 55,
@@ -2403,7 +2405,7 @@ class CursorSmithSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Ghost Trail")
-      .setDesc("Spawn ghosts that rise, drift, and fade. Off by default.")
+      .setDesc("Spawn ghosts that rise, drift, and fade. The signature effect — on by default.")
       .addToggle((toggle) => toggle.setValue(s.ghostTrail).onChange(setAndRedraw("ghostTrail")));
 
     if (s.ghostTrail) {
