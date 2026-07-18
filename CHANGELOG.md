@@ -4,7 +4,34 @@ All notable changes to Terminal Workbench Cursor are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.5] - 2026-07-15
+## [1.1.0] - 2026-07-17
+
+A performance overhaul for low-end machines.
+
+### Added
+- **Performance mode** (Settings → General) — one switch that turns off
+  blinking, motion smear, popping letters, and the pixel trail so the engine
+  can sleep between keystrokes. Turning it off restores your previous choices.
+
+### Changed
+- **The render loop now parks when nothing is animating.** Previously the
+  engine redrew the full window at display refresh rate from the moment it
+  loaded until it unloaded, even with a stationary caret. It now stops
+  entirely once every effect has finished and the caret is still (with
+  blinking on, this engages whenever no caret is visible — e.g. while the
+  window is unfocused), and is re-armed instantly by typing, clicks,
+  scrolling, focus, or layout changes, with a slow heartbeat as a safety net.
+- **Caret measurements are cached.** The expensive per-frame geometry queries
+  (`coordsAtPos`, computed styles, pane rects) are now keyed on the
+  selection, scroll position, window size, and a layout epoch — and shared
+  between the cursor and torch engines instead of measured twice per frame.
+- **The torch spotlight settles and stops.** Its loop parks once the light
+  reaches its target, and overlay styles are only written when they change.
+- Trail points are no longer collected while the cursor-trail effect is off.
+
+### Fixed
+- The injected style element is now removed from every window when the
+  plugin unloads.
 
 ### Changed
 - Repository housekeeping: `LICENSE` restored to the standard MIT text so it is

@@ -46,6 +46,9 @@ accent ramp, and every effect is individually toggleable in settings.
   restyled in the terminal idiom.
 - **Opt-in effects** — Ghost Trail ships off, and every effect is individually
   toggleable, so you decide exactly how much motion you want.
+- **Light on weak hardware** — the render loop sleeps whenever nothing is
+  animating, caret measurements are cached, and a one-switch **Performance
+  mode** calms every ambient animation for low-end machines.
 
 ## Ghost Trail
 

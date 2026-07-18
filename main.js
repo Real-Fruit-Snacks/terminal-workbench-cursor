@@ -67,6 +67,11 @@ const DEFAULT_SETTINGS = {
   enabled: true,
   cursorStyle: "Box", // "Line" | "Box" | "Underline"
 
+  // --- performance mode: calms every ambient animation in one switch so the
+  //     engine can park its render loop between keystrokes on weak machines ---
+  performanceMode: false,
+  perfModeRestore: null, // the user's smear/flameTrail/popLetters/blinkingEnabled before performance mode
+
   // --- appearance color controls ---
   colorDark: "theme",   // resolves to --twb-accent (dark), falls back to #63f2ab
   colorLight: "theme",  // resolves to --twb-accent (light), falls back to #007a4d
@@ -129,6 +134,10 @@ const DEFAULT_SETTINGS = {
   maxCatchUpSpeed: 0.85,     // 50-100% range (0.50 - 1.00)
   smoothAdaptive: true,      // Adaptive speed toggle
 };
+
+// Shared by the canvas and torch loops: park after this many consecutive
+// still frames (~200ms of grace at 60Hz).
+const IDLE_PARK_FRAMES = 12;
 
 function hexToRgba(hex, alpha) {
   let h = (hex || "#39ff14").replace("#", "");
@@ -236,6 +245,49 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.canvasRaf = 0;
     this.torchRaf = 0;
 
+    // Demand-driven rendering: the loops park when nothing is animating and
+    // are re-armed by input/layout events (plus a slow heartbeat safety net).
+    this._canvasTick = null;
+    this._torchTick = null;
+    this._idleFramesCanvas = 0;
+    this._idleFramesTorch = 0;
+    this._prevDrawnSig = null;
+    this._smearSettled = true;
+    this._wrapRectLast = null;
+    this._torchStyleLast = null;
+    this._geomEpoch = 0;
+    this._frameNow = 0;
+    this._cmCaretCache = null;
+    this._paneRectCache = null;
+    this._caretFrameMemo = null;
+    this._resizeObservers = new Map(); // document -> ResizeObserver
+    this._roObserved = new WeakSet();
+    this._heartbeat = 0;
+
+    // Workspace-level geometry changes (pane rearrangements, theme swaps,
+    // focus moving to another pane) invalidate cached caret geometry and
+    // wake the parked loops.
+    this.registerEvent(this.app.workspace.on("layout-change", () => this.bumpGeometry()));
+    this.registerEvent(this.app.workspace.on("css-change", () => this.bumpGeometry()));
+    this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.bumpGeometry()));
+    // Popout windows: attach wake listeners the moment a window opens (so
+    // the first keystroke there wakes a parked loop instantly, instead of
+    // waiting for the heartbeat), and drop that document's ResizeObserver
+    // and registration when it closes so closed windows can't accumulate.
+    this.registerEvent(this.app.workspace.on("window-open", (ww) => {
+      const doc = ww?.doc || ww?.win?.document;
+      if (doc && (this.canvasEngineActive || this.torchEngineActive)) this.registerWindowEvents(doc);
+      this.bumpGeometry();
+    }));
+    this.registerEvent(this.app.workspace.on("window-close", (ww) => {
+      const doc = ww?.doc || ww?.win?.document;
+      if (!doc) return;
+      this._resizeObservers.get(doc)?.disconnect();
+      this._resizeObservers.delete(doc);
+      this.registeredDocuments.delete(doc);
+      this.bumpGeometry();
+    }));
+
     this.addCommand({
       id: "toggle-cursor-smith",
       name: "Toggle custom cursor",
@@ -248,6 +300,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
       callback: () => {
         this.rebuildGhostPalette();
         this.spawnGhost(this.lastActive);
+        this.wakeEngines();
       },
     });
 
@@ -261,9 +314,15 @@ module.exports = class CursorSmithPlugin extends Plugin {
 
   onunload() {
     this.disable();
+    this._stopHeartbeat();
     if (this._cleanups) {
       for (const cleanup of this._cleanups) cleanup();
       this._cleanups = [];
+    }
+    // Remove the injected style element from every document we touched.
+    const docs = [document, ...Array.from(this.registeredDocuments)];
+    for (const doc of docs) {
+      doc?.getElementById?.("cursor-smith-dynamic-styles")?.remove();
     }
   }
 
@@ -326,15 +385,36 @@ module.exports = class CursorSmithPlugin extends Plugin {
       this.mouseX = e.clientX;
       this.mouseY = e.clientY;
       this.lastMouseMove = Date.now();
+      // Mouse movement only affects the torch target - don't wake the
+      // canvas loop for it, or hovering over the window defeats idling.
+      if (this.settings.torchEffect) this.wakeTorch();
     };
-    const onResize = () => this.resizeCanvas();
+    const onResize = () => {
+      this.resizeCanvas();
+      this.bumpGeometry();
+    };
+    // Anything that can move the caret or change what's on screen re-arms
+    // the parked render loops. All cheap no-ops while the loops are running.
+    const onWake = () => this.wakeEngines();
 
-    doc.addEventListener("mousemove", onMouseMove);
+    doc.addEventListener("mousemove", onMouseMove, { passive: true });
+    doc.addEventListener("keydown", onWake, { passive: true });
+    doc.addEventListener("mousedown", onWake, { passive: true });
+    doc.addEventListener("selectionchange", onWake);
+    doc.addEventListener("scroll", onWake, { capture: true, passive: true });
+    doc.addEventListener("focusin", onWake);
+    doc.addEventListener("focusout", onWake);
     const win = doc.defaultView;
     if (win) win.addEventListener("resize", onResize);
 
     this._cleanups.push(() => {
       doc.removeEventListener("mousemove", onMouseMove);
+      doc.removeEventListener("keydown", onWake);
+      doc.removeEventListener("mousedown", onWake);
+      doc.removeEventListener("selectionchange", onWake);
+      doc.removeEventListener("scroll", onWake, { capture: true });
+      doc.removeEventListener("focusin", onWake);
+      doc.removeEventListener("focusout", onWake);
       if (win) win.removeEventListener("resize", onResize);
     });
   }
@@ -344,6 +424,8 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.applyBodyClasses();
     this.applyOverlayStyle();
     this.configureGhostThrottles();
+    // A settings change can alter what the next frame looks like.
+    this.bumpGeometry();
   }
 
   toggle() {
@@ -440,14 +522,136 @@ module.exports = class CursorSmithPlugin extends Plugin {
     if (!this.overlay) {
       targetDoc.body.classList.add("torch-cursor-active");
       this.overlay = targetDoc.body.createDiv({ cls: "torch-cursor-overlay" });
+      // A brand-new element has no inline styles: the skip-unchanged-writes
+      // check must not compare against the previous element's last key.
+      this._torchStyleLast = null;
       this.injectStyles(targetDoc);
       this.applyOverlayStyle();
 
       this.modalOpen = !!targetDoc.querySelector(".modal-container");
       this.modalObserver = new MutationObserver(() => {
         this.modalOpen = !!targetDoc.querySelector(".modal-container");
+        // A parked torch must still hide/show itself when modals toggle.
+        this.wakeTorch();
       });
       this.modalObserver.observe(targetDoc.body, { childList: true });
+    }
+  }
+
+  // ── Demand-driven rendering: wake / park / geometry invalidation ──────────
+
+  // One place that clears every cached measurement - the single source of
+  // truth for what "forget everything measured" means.
+  _invalidateGeometryCaches() {
+    this._cmCaretCache = null;
+    this._paneRectCache = null;
+    this._caretFrameMemo = null;
+  }
+
+  // Invalidate every cached measurement, force a repaint, and wake the
+  // loops. Called on workspace layout changes, theme swaps, window resize,
+  // pane resizes (via ResizeObserver), and settings changes.
+  bumpGeometry() {
+    this._geomEpoch++;
+    this._invalidateGeometryCaches();
+    // Colors, theme, blink mode, and cursor style are NOT part of the drawn
+    // signature - clearing it forces one repaint on the next tick so
+    // appearance-only changes can never leave stale pixels on a still caret.
+    this._prevDrawnSig = null;
+    this._torchStyleLast = null;
+    this.wakeEngines();
+  }
+
+  wakeEngines() {
+    this._caretFrameMemo = null;
+    if (this.canvasEngineActive && !this.canvasRaf && this._canvasTick) {
+      this._idleFramesCanvas = 0;
+      this.canvasRaf = requestAnimationFrame(this._canvasTick);
+    }
+    this.wakeTorch();
+  }
+
+  wakeTorch() {
+    if (this.torchEngineActive && !this.torchRaf && this._torchTick) {
+      this._idleFramesTorch = 0;
+      this.torchRaf = requestAnimationFrame(this._torchTick);
+    }
+  }
+
+  // Slow safety net while parked: if a signal was missed (e.g. a brand-new
+  // popout window that has no listeners yet), a stale caret self-corrects
+  // within half a second instead of sticking forever.
+  _startHeartbeat() {
+    if (this._heartbeat) return;
+    this._heartbeat = setInterval(() => this._heartbeatCheck(), 500);
+  }
+
+  _stopHeartbeat() {
+    if (this._heartbeat) {
+      clearInterval(this._heartbeat);
+      this._heartbeat = 0;
+    }
+  }
+
+  _heartbeatCheck() {
+    const canvasParked = this.canvasEngineActive && !this.canvasRaf;
+    const torchParked = this.torchEngineActive && !this.torchRaf;
+    if (!canvasParked && !torchParked) {
+      this._stopHeartbeat();
+      return;
+    }
+    // Only bypass the caches when the canvas loop is parked - while it's
+    // running it re-measures every frame anyway, and evicting its caches
+    // here would just duplicate that work.
+    if (canvasParked) this._invalidateGeometryCaches();
+    const caret = this.caretCoords();
+    const a = this.lastActive;
+    const changed =
+      (!caret) !== (!a) ||
+      (caret && a &&
+        (Math.abs(caret.x - a.x) > 0.5 ||
+          Math.abs(caret.top - a.top) > 0.5 ||
+          Math.abs((caret.w ?? 0) - (a.w ?? 0)) > 0.5 ||
+          Math.abs((caret.h ?? 0) - (a.h ?? 0)) > 0.5 ||
+          (caret.char || "") !== (a.char || "") ||
+          !!caret.focused !== !!a.focused));
+    if (changed) this.wakeEngines();
+  }
+
+  // True while any frame-to-frame change is possible; false means the canvas
+  // output is pixel-stable and the loop can park.
+  frameIsAnimating(drawnChanged) {
+    const s = this.settings;
+    if (drawnChanged) return true;
+    if (this.particles.length || this.flamePixels.length || this.ghosts.length) return true;
+    if (s.crtEffect && this.trail.length) return true;
+    if (this.pending) return true;
+    if (this.smearQuad && !this._smearSettled) return true;
+    const hasCaret = !!this.animActive;
+    if (hasCaret && s.blinkingEnabled) return true;
+    if (hasCaret && s.energyEffect) return true;
+    return false;
+  }
+
+  // Watch the active editor's scroller for size changes (sidebar toggles,
+  // pane drags, zoom) so cached caret geometry can't go stale mid-layout.
+  observeViewGeometry(view) {
+    const doc = view.dom.ownerDocument;
+    let ro = this._resizeObservers.get(doc);
+    // Watch both the scroller (pane resizes: sidebar toggles, pane drags)
+    // and the content element (reflows that move the caret without any
+    // pane/scroll/selection change - an inline image finishing loading, a
+    // fold collapsing, embeds resizing).
+    for (const el of [view.scrollDOM, view.contentDOM]) {
+      if (!el || this._roObserved.has(el)) continue;
+      if (!ro) {
+        const RO = (doc.defaultView || window).ResizeObserver;
+        if (!RO) return;
+        ro = new RO(() => this.bumpGeometry());
+        this._resizeObservers.set(doc, ro);
+      }
+      ro.observe(el);
+      this._roObserved.add(el);
     }
   }
 
@@ -495,6 +699,15 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.animActive = null;
     this._formMirror?.remove();
     this._formMirror = null;
+    this._canvasTick = null;
+    this._idleFramesCanvas = 0;
+    this._prevDrawnSig = null;
+    this._smearSettled = true;
+    this._wrapRectLast = null;
+    this._invalidateGeometryCaches();
+    for (const ro of this._resizeObservers.values()) ro.disconnect();
+    this._resizeObservers.clear();
+    this._roObserved = new WeakSet();
   }
 
   disableTorchOverlay() {
@@ -514,10 +727,16 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.modalObserver?.disconnect();
     this.modalObserver = null;
     this.modalOpen = false;
+    this._torchTick = null;
+    this._idleFramesTorch = 0;
+    this._torchStyleLast = null;
   }
 
   enableCanvasEngine() {
     this.canvasEngineActive = true;
+    // The main window must have wake listeners from the start - popout
+    // documents get theirs the first time a tick sees their view.
+    this.registerWindowEvents(document);
     this.trail = [];
     this.particles = [];
     this.ghosts = [];
@@ -531,8 +750,12 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.lastMoveTime = 0;
     this.typingSpeedMod = 1;
 
-    const tick = () => {
+    const tick = (frameTime) => {
       if (!this.canvasEngineActive) return;
+      this.canvasRaf = 0;
+      // The rAF timestamp is identical for every callback in the same
+      // browser frame - it keys the per-frame caret memo shared with torch.
+      this._frameNow = frameTime ?? performance.now();
       const view = this.app.workspace.activeEditor?.editor?.cm;
       this.ensureCanvasForView(view);
       if (view) this.registerWindowEvents(view.dom.ownerDocument);
@@ -544,28 +767,62 @@ module.exports = class CursorSmithPlugin extends Plugin {
         // no reason to keep the canvas boxed inside the pane, and doing so
         // is exactly what made the cursor invisible outside the editor.
         const r = view && view.hasFocus ? this.getPaneRect(view) : null;
-        if (r) {
-          this.canvasWrapper.style.top = r.top + "px";
-          this.canvasWrapper.style.left = r.left + "px";
-          this.canvasWrapper.style.width = r.width + "px";
-          this.canvasWrapper.style.height = r.height + "px";
-          // Shift the canvas backward so absolute screen coordinates draw perfectly
-          this.canvas.style.transform = `translate(-${r.left}px, -${r.top}px)`;
-        } else {
-          this.canvasWrapper.style.top = "0px";
-          this.canvasWrapper.style.left = "0px";
-          this.canvasWrapper.style.width = "100vw";
-          this.canvasWrapper.style.height = "100vh";
-          this.canvas.style.transform = "none";
+        // Skip the five style writes when the rect hasn't changed - they
+        // are the same values 99% of frames.
+        const wrapKey = r ? `${r.top}|${r.left}|${r.width}|${r.height}` : "full";
+        if (wrapKey !== this._wrapRectLast) {
+          this._wrapRectLast = wrapKey;
+          if (r) {
+            this.canvasWrapper.style.top = r.top + "px";
+            this.canvasWrapper.style.left = r.left + "px";
+            this.canvasWrapper.style.width = r.width + "px";
+            this.canvasWrapper.style.height = r.height + "px";
+            // Shift the canvas backward so absolute screen coordinates draw perfectly
+            this.canvas.style.transform = `translate(-${r.left}px, -${r.top}px)`;
+          } else {
+            this.canvasWrapper.style.top = "0px";
+            this.canvasWrapper.style.left = "0px";
+            this.canvasWrapper.style.width = "100vw";
+            this.canvasWrapper.style.height = "100vh";
+            this.canvas.style.transform = "none";
+          }
         }
       }
 
       this.updateActivePoint();
       this.updateSmoothCursor();
       this.updateSmearQuad();
-      this.draw();
+
+      // Signature of the drawn caret: if it changed, we must repaint; if it
+      // and every animation source are still, the canvas is pixel-stable.
+      const a = this.animActive;
+      const sig = a
+        ? `${a.x.toFixed(2)}|${a.top.toFixed(2)}|${(a.w ?? 0).toFixed?.(2) ?? a.w}|${(a.h ?? 0).toFixed?.(2) ?? a.h}|${a.holdChar || a.char || ""}|${a.focused ? 1 : 0}`
+        : "";
+      const drawnChanged = sig !== this._prevDrawnSig;
+      this._prevDrawnSig = sig;
+
+      const animating = this.frameIsAnimating(drawnChanged);
+      if (animating) {
+        this.draw();
+      }
+
+      if (animating) {
+        this._idleFramesCanvas = 0;
+      } else {
+        this._idleFramesCanvas++;
+      }
+
+      if (this._idleFramesCanvas >= IDLE_PARK_FRAMES) {
+        // Nothing is moving: park the loop. wakeEngines()/the heartbeat
+        // restart it; the canvas keeps showing the last-drawn frame.
+        this._startHeartbeat();
+        return;
+      }
       this.canvasRaf = requestAnimationFrame(tick);
     };
+    this._canvasTick = tick;
+    this._idleFramesCanvas = 0;
     this.canvasRaf = requestAnimationFrame(tick);
   }
 
@@ -580,28 +837,66 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.canvas.width = Math.max(1, Math.round(w * dpr));
     this.canvas.height = Math.max(1, Math.round(h * dpr));
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Resizing wipes the bitmap - force the next tick to repaint even if
+    // the caret signature is unchanged.
+    this._prevDrawnSig = null;
+    this._wrapRectLast = null;
   }
 
   caretCoords() {
+    // Per-frame memo: the canvas and torch loops both need the caret in the
+    // same animation frame - measure once, share the result. Keyed on the
+    // rAF timestamp (identical for all callbacks in one frame), so it can't
+    // mis-share across frames on a slow machine the way a wall-clock TTL
+    // could. Every caller gets its own shallow clone: callers stamp
+    // per-keystroke flags (holdChar/ghostTyped) onto the object, and those
+    // must never leak into another engine's copy or back into a cache.
+    const memo = this._caretFrameMemo;
+    if (memo && memo.frame === this._frameNow) {
+      return memo.val ? { ...memo.val } : memo.val;
+    }
+
     const view = this.app.workspace.activeEditor?.editor?.cm;
 
     // The note editor (CodeMirror) itself has focus - use the precise,
     // CodeMirror-aware caret info (real glyph metrics, table handling, etc).
-    if (view && view.hasFocus) {
-      return this.cmCaretCoords(view);
-    }
-
-    // Focus is somewhere else in the app that isn't CodeMirror at all - the
-    // file-tree rename box, the Command Palette / Quick Switcher input,
-    // Settings text fields, other plugins' modals, and so on. These never
-    // had a caret to draw before, which is why the custom cursor (and the
-    // native one, hidden globally by our CSS) both went missing there.
-    // Fall back to a generic caret built from the browser's own selection/
-    // element rect so the cursor still shows up on any editable surface.
-    return this.genericCaretCoords();
+    // Focus anywhere else falls back to a generic caret built from the
+    // browser's own selection/element rect, so the cursor still shows up on
+    // any editable surface (rename box, palette, settings fields, ...).
+    const val = view && view.hasFocus ? this.cmCaretCoords(view) : this.genericCaretCoords();
+    this._caretFrameMemo = { frame: this._frameNow, val };
+    return val ? { ...val } : val;
   }
 
+  // Cached front for the expensive measurement below. The key captures
+  // everything that legitimately moves the caret on screen: the selection,
+  // document length, scroll position, window size, focus, and a geometry
+  // epoch bumped by layout/theme/resize events and the pane ResizeObserver.
+  // A short TTL self-heals any invalidation this misses.
   cmCaretCoords(view) {
+    const win = view.dom.ownerDocument.defaultView || window;
+    const scroller = view.scrollDOM;
+    const key =
+      this._geomEpoch + "," +
+      view.state.selection.main.head + "," +
+      view.state.doc.length + "," +
+      (scroller ? scroller.scrollTop + "," + scroller.scrollLeft : "-") + "," +
+      win.innerWidth + "x" + win.innerHeight + "," +
+      (view.hasFocus ? 1 : 0);
+    const now = performance.now();
+    const cached = this._cmCaretCache;
+    if (cached && cached.view === view && cached.key === key && now - cached.t < 250) {
+      // Clone: callers stamp per-keystroke flags (holdChar/ghostTyped) onto
+      // the returned object, which must never leak back into the cache.
+      return cached.val ? { ...cached.val } : cached.val;
+    }
+    const val = this.cmCaretCoordsMeasure(view);
+    this.observeViewGeometry(view);
+    this._cmCaretCache = { view, key, val, t: now };
+    return val ? { ...val } : val;
+  }
+
+  cmCaretCoordsMeasure(view) {
     try {
       const pos = view.state.selection.main.head;
       const doc = view.dom.ownerDocument;
@@ -1239,6 +1534,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
     if (!rect) {
       this.smearQuad = null;
       this.smearCenterPrev = null;
+      this._smearSettled = true;
       return;
     }
 
@@ -1255,6 +1551,7 @@ module.exports = class CursorSmithPlugin extends Plugin {
         this.smearQuad[key] = { x: targets[key].x, y: targets[key].y, vx: 0, vy: 0 };
       }
       this.smearCenterPrev = { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 };
+      this._smearSettled = true;
       return;
     }
 
@@ -1301,9 +1598,46 @@ module.exports = class CursorSmithPlugin extends Plugin {
         c.vy = 0;
       }
     }
+
+    // Detect the spring coming to rest (both velocity AND displacement near
+    // zero - an oscillating corner has v = 0 at its extremes, so velocity
+    // alone isn't enough). Once settled, snap corners onto their targets so
+    // the drawn output is truly static and the render loop can park.
+    let settled = true;
+    for (const key in targets) {
+      const c = this.smearQuad[key];
+      const t = targets[key];
+      if (Math.abs(c.vx) > 1 || Math.abs(c.vy) > 1 || Math.abs(c.x - t.x) > 0.25 || Math.abs(c.y - t.y) > 0.25) {
+        settled = false;
+        break;
+      }
+    }
+    if (settled && !this._smearSettled) {
+      // Transition into rest: snap once, and force one repaint so the
+      // corrected corners actually reach the screen before the loop parks.
+      // (Snapping/invalidating on every settled frame would keep the loop
+      // awake forever.)
+      for (const key in targets) {
+        const c = this.smearQuad[key];
+        c.x = targets[key].x;
+        c.y = targets[key].y;
+        c.vx = 0;
+        c.vy = 0;
+      }
+      this._prevDrawnSig = null;
+    }
+    this._smearSettled = settled;
   }
 
   pushTrail(point) {
+    // The trail is only ever drawn by the cursor-trail effect - don't
+    // accumulate points (or keep the loop awake) when it's off. Also drop
+    // any points frozen from before the effect was switched off, so
+    // re-enabling it can't flash a stale afterimage of an old caret path.
+    if (!this.settings.crtEffect) {
+      if (this.trail.length) this.trail = [];
+      return;
+    }
     if (!point) return;
     this.trail.push({ x: point.x, y: point.top, w: point.w, h: point.h, t: performance.now() });
     const max = Math.max(0, Math.round(this.settings.trailLength));
@@ -1721,8 +2055,10 @@ module.exports = class CursorSmithPlugin extends Plugin {
     this.x = this.tx = window.innerWidth / 2;
     this.y = this.ty = window.innerHeight / 2;
 
-    const tick = () => {
+    const tick = (frameTime) => {
       if (!this.torchEngineActive) return;
+      this.torchRaf = 0;
+      this._frameNow = frameTime ?? performance.now();
       const view = this.app.workspace.activeEditor?.editor?.cm;
       this.ensureTorchOverlayForView(view);
       if (view) this.registerWindowEvents(view.dom.ownerDocument);
@@ -1736,6 +2072,12 @@ module.exports = class CursorSmithPlugin extends Plugin {
       const lerp = this.settings.overlaySpeed;
       this.x += (this.tx - this.x) * lerp;
       this.y += (this.ty - this.y) * lerp;
+      // Snap once close enough so the lerp actually terminates instead of
+      // asymptotically chasing sub-pixel deltas forever.
+      if (Math.abs(this.tx - this.x) < 0.4 && Math.abs(this.ty - this.y) < 0.4) {
+        this.x = this.tx;
+        this.y = this.ty;
+      }
 
       const targetDoc = view ? view.dom.ownerDocument : this.canvas?.ownerDocument ?? document;
       const r = this.getPaneRect(view);
@@ -1745,19 +2087,36 @@ module.exports = class CursorSmithPlugin extends Plugin {
       // around them the same way getPaneRect does for the editor pane.
       const rect = usePane ? r : this.getFullViewportRect(targetDoc);
 
-      this.overlay.style.top = rect.top + "px";
-      this.overlay.style.left = rect.left + "px";
-      this.overlay.style.width = rect.width + "px";
-      this.overlay.style.height = rect.height + "px";
-
-      this.overlay.style.setProperty("--torch-x", (this.x - rect.left).toFixed(1) + "px");
-      this.overlay.style.setProperty("--torch-y", (this.y - rect.top).toFixed(1) + "px");
-
       const hideForModal = this.settings.overlaySpareSidebars && this.modalOpen;
-      this.overlay.classList.toggle("torch-cursor-hidden", !!hideForModal);
+      // One string captures everything we would write to the overlay this
+      // frame; skip the six style writes when nothing changed.
+      const styleKey =
+        rect.top + "|" + rect.left + "|" + rect.width + "|" + rect.height + "|" +
+        (this.x - rect.left).toFixed(1) + "|" + (this.y - rect.top).toFixed(1) + "|" +
+        (hideForModal ? 1 : 0);
+      const changed = styleKey !== this._torchStyleLast;
+      if (changed) {
+        this._torchStyleLast = styleKey;
+        this.overlay.style.top = rect.top + "px";
+        this.overlay.style.left = rect.left + "px";
+        this.overlay.style.width = rect.width + "px";
+        this.overlay.style.height = rect.height + "px";
+        this.overlay.style.setProperty("--torch-x", (this.x - rect.left).toFixed(1) + "px");
+        this.overlay.style.setProperty("--torch-y", (this.y - rect.top).toFixed(1) + "px");
+        this.overlay.classList.toggle("torch-cursor-hidden", !!hideForModal);
+      }
 
+      this._idleFramesTorch = changed ? 0 : this._idleFramesTorch + 1;
+      if (this._idleFramesTorch >= IDLE_PARK_FRAMES) {
+        // The light has settled on its target: park. Mouse movement, caret
+        // events, and the heartbeat re-arm the loop.
+        this._startHeartbeat();
+        return;
+      }
       this.torchRaf = requestAnimationFrame(tick);
     };
+    this._torchTick = tick;
+    this._idleFramesTorch = 0;
     this.torchRaf = requestAnimationFrame(tick);
   }
 
@@ -1799,12 +2158,23 @@ getFullViewportRect(doc) {
 
   getPaneRect(view) {
     if (!view) return null;
+    // Cached: the pane only moves on layout/resize (which bump the geometry
+    // epoch); a short TTL self-heals anything the epoch misses.
+    const now = performance.now();
+    const cached = this._paneRectCache;
+    if (cached && cached.view === view && cached.epoch === this._geomEpoch && now - cached.t < 250) {
+      return cached.val;
+    }
     const rootEl = view.dom.closest(".cm-editor") || view.dom.closest(".workspace-leaf");
     if (!rootEl) return null;
 
     // No clamps. Returns the exact physical boundaries of the text editor pane.
-    return rootEl.getBoundingClientRect();
-  }  updateOverlayTarget() {
+    const val = rootEl.getBoundingClientRect();
+    this._paneRectCache = { view, epoch: this._geomEpoch, val, t: now };
+    return val;
+  }
+
+  updateOverlayTarget() {
     const mode = this.settings.overlayFollowMode;
     const caret = this.caretCoords();
     if (caret) {
@@ -1895,6 +2265,40 @@ class CursorSmithSettingTab extends PluginSettingTab {
       .setName("Hide real cursor")
       .setDesc("Hides the browser's normal text caret so only the custom one shows.")
       .addToggle((toggle) => toggle.setValue(s.hideNativeCaret).onChange(set("hideNativeCaret")));
+
+    new Setting(containerEl)
+      .setName("Performance mode")
+      .setDesc("For low-end machines: turns off blinking, motion smear, popping letters, and the pixel trail in one switch so the engine can sleep between keystrokes. Turning it off restores your previous choices.")
+      .addToggle((toggle) =>
+        toggle.setValue(s.performanceMode).onChange(async (value) => {
+          const p = this.plugin.settings;
+          if (value) {
+            p.perfModeRestore = {
+              smear: p.smear,
+              flameTrail: p.flameTrail,
+              popLetters: p.popLetters,
+              blinkingEnabled: p.blinkingEnabled,
+            };
+            p.smear = false;
+            p.flameTrail = false;
+            p.popLetters = false;
+            p.blinkingEnabled = false;
+          } else {
+            const r = p.perfModeRestore || {};
+            // Only restore a setting that is still off (i.e. still as
+            // performance mode left it). If the user manually re-enabled
+            // one of the four while the mode was on, that deliberate
+            // choice wins over the stale snapshot.
+            for (const key of ["smear", "flameTrail", "popLetters", "blinkingEnabled"]) {
+              if (p[key] === false) p[key] = r[key] ?? DEFAULT_SETTINGS[key];
+            }
+            p.perfModeRestore = null;
+          }
+          p.performanceMode = value;
+          await this.plugin.saveSettings();
+          this.display();
+        })
+      );
 
     // ── Appearance ──────────────────────────────────────────
     section("Appearance", "Colour, size, and opacity of the caret itself.");
