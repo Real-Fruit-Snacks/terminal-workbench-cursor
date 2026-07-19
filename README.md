@@ -90,6 +90,10 @@ that logic:
 npm test
 ```
 
+Continuous integration runs those tests on every push and also verifies that the
+copies of those helpers inlined in `main.js` stay identical to the reference in
+`ghost-core.js`, so the two can never silently drift apart.
+
 ## Credits
 
 Forged from [cursor-smith](https://github.com/Sadsnake1/cursor-smith) by Sadsnake1
