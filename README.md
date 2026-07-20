@@ -14,6 +14,8 @@
 
 ---
 
+Part of the [Terminal Workbench family](https://github.com/Real-Fruit-Snacks/terminal-workbench-suite) — one repo with the design spec, CSS tokens, every port, and the official monospace font.
+
 ## Overview
 
 Terminal Workbench Cursor replaces Obsidian's editor caret with a small canvas
